@@ -1,6 +1,14 @@
+/// Represents the presence/form of a value in schemas:
+/// - Absent: field not in serialized data  {}
+/// - Null:   field present but null       {"field": null}
+/// - Some:   field present with value     {"field": value}
+///
+/// Cardinality for bool: 2 (base) + 1 (optional) + 1 (nullable) = 4 states
 use std::{fmt, slice::SliceIndex};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Copy, Debug, Hash)]
+#[derive_const(Eq)]
+#[allow(clippy::derived_hash_with_manual_eq)]
 pub enum Presence<T> {
     /// Field/key is absent from the structure
     Absent,
@@ -10,40 +18,63 @@ pub enum Presence<T> {
     Some(T),
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// Type implementation
+/////////////////////////////////////////////////////////////////////////////
 impl<T> Presence<T> {
-    /// Check if the field is absent
-    pub fn is_absent(&self) -> bool {
+    /////////////////////////////////////////////////////////////////////////
+    // Querying the contained values
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Returns true if the field is absent
+    /// # Examples
+    ///
+    #[inline]
+    pub const fn is_absent(&self) -> bool {
         matches!(self, Presence::Absent)
     }
 
-    /// Check if the value is null
-    pub fn is_null(&self) -> bool {
+    /// Returns true if the value is null
+    /// # Examples
+    ///
+    #[inline]
+    pub const fn is_null(&self) -> bool {
         matches!(self, Presence::Null)
     }
 
-    /// Check if a concrete value is present
-    pub fn is_present(&self) -> bool {
+    /// Returns true if a concrete value is present.
+    /// # Examples
+    ///
+    #[inline]
+    pub const fn is_present(&self) -> bool {
         matches!(self, Presence::Some(_))
     }
 
-    /// Get a reference to the value if present
-    pub fn as_ref(&self) -> &T {
+    /// Converts from `&Presence<T>` to `Presence<&T>`.
+    /// # Examples
+    ///
+    #[inline]
+    pub const fn as_ref(&self) -> Presence<&T> {
         match *self {
-            Presence::Some(val) => Some(val),
+            Presence::Some(ref val) => Presence(val),
             _ => None,
         }
     }
 
-    /// Get a mutable reference to the value if present
-    pub fn as_mut(&mut self) -> Option<&mut T> {
+    /// Converts from `&mut Presence<T>` to `Presence<&mut T>`.
+    #[inline]
+    pub const fn as_mut(&mut self) -> Presence<&mut T> {
         match *self {
-            Presence::Some(val) => Some(val),
+            Presence::Some(ref mut val) => Presence(val),
             _ => None,
         }
     }
 
-    /// Convert to Option<Option<T>> for interop
-    pub fn to_nested_option(self) -> Option<Option<T>> {
+    /// Convert Presence<T> to Option<Option<T>> for interop
+    /// # Examples
+    ///
+    #[inline]
+    pub const fn to_nested_option(self) -> Option<Option<T>> {
         match self {
             Presence::Absent => None,
             Presence::Null => Some(None),

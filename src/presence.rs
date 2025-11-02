@@ -62,6 +62,8 @@ impl<T> Presence<T> {
     }
 
     /// Converts from `&mut Presence<T>` to `Presence<&mut T>`.
+    /// # Examples
+    ///
     #[inline]
     pub const fn as_mut(&mut self) -> Presence<&mut T> {
         match *self {

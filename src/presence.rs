@@ -83,4 +83,19 @@ impl<T> Presence<T> {
             Presence::Some(val) => Some(Some(val)),
         }
     }
+
+    /////////////////////////////////////////////////////////////////////////
+    // Getting to contained values
+    /////////////////////////////////////////////////////////////////////////
+}
+
+/// Display implementation
+impl<T: fmt::Display> fmt::Display for Presence<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Presence::Absent => write!(f, "(absent)"),
+            Presence::Null => write!(f, "null"),
+            Presence::Some(val) => write!(f, "{}", val),
+        }
+    }
 }

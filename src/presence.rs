@@ -124,7 +124,7 @@ impl<T> IntoIterator for Presence<T> {
     ///
     fn into_iter(self) -> IntoIter<T> {
         IntoIter {
-            inner: Item { opt: self },
+            inner: Item { presence: self },
         }
     }
 }
@@ -132,7 +132,6 @@ impl<T> IntoIterator for Presence<T> {
 /////////////////////////////////////////////////////////////////////////////
 // The Presence Iterators
 //////////////////////////////////////////////////////////////////////////
-#[derive(Clone, Debug)]
 pub struct Item<A> {
     presence: Presence<A>,
 }

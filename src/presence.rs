@@ -103,3 +103,36 @@ impl<T: fmt::Display> fmt::Display for Presence<T> {
         }
     }
 }
+
+// Default implementation
+impl<T> const Default for Presence<T> {
+    /// Returns the default Presence value, which is Absent
+    /// # Examples
+    ///
+    fn default() -> Presence<T> {
+        Absent
+    }
+}
+
+// Iterator implementation
+impl<T> IntoIterator for Presence<T> {
+    type Item = T;
+    type IntoIter = std::option::IntoIter<T>;
+
+    /// Creates an iterator that yields the contained value if present
+    /// # Examples
+    ///
+    fn into_iter(self) -> IntoIter<T> {
+        IntoIter {
+            inner: Item { opt: self },
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// The Presence Iterators
+//////////////////////////////////////////////////////////////////////////
+#[derive(Clone, Debug)]
+pub struct Item<A> {
+    presence: Presence<A>,
+}

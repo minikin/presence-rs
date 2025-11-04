@@ -4,7 +4,7 @@
 /// - Some:   field present with value     {"field": value}
 ///
 /// Cardinality for bool: 2 (base) + 1 (optional) + 1 (nullable) = 4 states
-use std::{fmt, slice::SliceIndex};
+use std::{fmt, iter::FusedIterator, slice::SliceIndex};
 
 #[derive(Copy, Debug, Hash)]
 #[derive_const(Eq)]
@@ -132,6 +132,39 @@ impl<T> IntoIterator for Presence<T> {
 /////////////////////////////////////////////////////////////////////////////
 // The Presence Iterators
 //////////////////////////////////////////////////////////////////////////
+#[derive(Clone, Debug)]
 pub struct Item<A> {
     presence: Presence<A>,
 }
+
+impl<A> Iterator for Item<A> {
+    type Item = A;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.presence.take()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Presence<usize>) {
+        let len = self.len();
+        (len, Presence::Some(len))
+    }
+}
+
+impl<A> DoubleEndedIterator for Item<A> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.presence.take()
+    }
+}
+
+impl<A> ExactSizeIterator for Item<A> {
+    #[inline]
+    fn len(&self) -> usize {
+        self.presence.len()
+    }
+}
+
+impl<A> FusedIterator for Item<A> {}
+unsafe impl<A> TrustedLen for Item<A> {}

@@ -168,3 +168,45 @@ impl<A> ExactSizeIterator for Item<A> {
 
 impl<A> FusedIterator for Item<A> {}
 unsafe impl<A> TrustedLen for Item<A> {}
+
+#[derive(Debug)]
+pub struct Iter<'a, A> {
+    inner: Iter<&'a A>,
+}
+
+impl<'a, A> Iterator for Iter<'a, A> {
+    type Item = &'a A;
+
+    #[inline]
+    fn next(&mut self) -> Presence<Self::Item> {
+        self.inner.next()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Presence<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'a, A> DoubleEndedIterator for Iter<'a, A> {
+    #[inline]
+    fn next_back(&mut self) -> Presence<Self::Item> {
+        self.inner.next_back()
+    }
+}
+impl<'a, A> ExactSizeIterator for Iter<'_, A> {}
+
+impl<A> FusedIterator for Iter<'_, A> {}
+
+unsafe impl<A> TrustedLen for Iter<'_, A> {}
+
+impl<A> Clone for Iter<'_, A>
+where
+    A: Clone,
+{
+    fn clone(&self) -> Self {
+        Iter {
+            inner: self.inner.clone(),
+        }
+    }
+}

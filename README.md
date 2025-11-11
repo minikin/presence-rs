@@ -1,6 +1,7 @@
 # Presence
 
-> A Rust library providing a tri-state type for representing value presence in schemas and data structures.
+> A Rust library providing a tri-state type for representing value presence
+> in schemas and data structures.
 
 - [Presence](#presence)
   - [Overview](#overview)
@@ -45,12 +46,18 @@ difference between "field not present" and "field explicitly set to null" has me
 
 ## Why Not `Option<Option<T>>`?
 
-While `Option<Option<T>>` can technically represent three states, `Presence<T>` offers several advantages:
+While `Option<Option<T>>` can technically represent three states, `Presence<T>`
+offers several advantages:
 
-- **Clarity**: `Presence::Absent`, `Presence::Null`, and `Presence::Some(value)` are self-documenting. Compare this to `None`, `Some(None)`, and `Some(Some(value))` where the meaning of nested `None` values is ambiguous.
-- **Ergonomics**: Method names like `is_absent()`, `is_null()`, and `is_present()` clearly express intent, versus checking `option.is_none()` or `option == Some(None)`.
-- **Type Safety**: The compiler understands the three distinct states, making pattern matching more explicit and reducing cognitive load.
-- **Semantics**: `Presence` models the domain concept directly rather than forcing a tri-state model into a two-level optional structure.
+- **Clarity**: `Presence::Absent`, `Presence::Null`, and `Presence::Some(value)`
+are self-documenting. Compare this to `None`, `Some(None)`, and `Some(Some(value))`
+where the meaning of nested `None` values is ambiguous.
+- **Ergonomics**: Method names like `is_absent()`, `is_null()`, and `is_present()`
+clearly express intent, versus checking `option.is_none()` or `option == Some(None)`.
+- **Type Safety**: The compiler understands the three distinct states,
+making pattern matching more explicit and reducing cognitive load.
+- **Semantics**: `Presence` models the domain concept directly rather than
+forcing a tri-state model into a two-level optional structure.
 
 ```rust
 // With Presence - clear and explicit
@@ -141,7 +148,8 @@ apply_update("Alice".to_string(), update);
 ## Features
 
 - **Type-safe** tri-state representation
-- **Iterator traits**: `IntoIterator`, `Iterator`, `DoubleEndedIterator`, `ExactSizeIterator`, `FusedIterator`
+- **Iterator traits**: `IntoIterator`, `Iterator`, `DoubleEndedIterator`,
+`ExactSizeIterator`, `FusedIterator`
 - **Default trait**: Defaults to `Absent`
 - **Display trait**: Human-readable output
 - **Conversion to nested `Option<Option<T>>`** for compatibility with existing code
@@ -165,11 +173,13 @@ apply_update("Alice".to_string(), update);
 
 This type is particularly useful in:
 
-- **API clients/servers** where you need to distinguish between a field not being sent vs. being explicitly set to null
+- **API clients/servers** where you need to distinguish between a field not
+being sent vs. being explicitly set to null
 - **Partial updates** where absence means "don't change" vs. null means "clear the value"
 - **Schema validation** where field presence has semantic meaning
 - **GraphQL implementations** where null and undefined are distinct concepts
-- **Database operations** where you need to differentiate between "not provided" and "set to NULL"
+- **Database operations** where you need to differentiate between "not provided"
+and "set to NULL"
 
 ## License
 

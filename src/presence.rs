@@ -24,33 +24,94 @@ impl<T> Presence<T> {
     // Querying the contained values
     /////////////////////////////////////////////////////////////////////////
 
-    /// Returns true if the field is absent
+    /// Returns `true` if the presence is [`Absent`].
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Absent;
+    /// assert!(x.is_absent());
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert!(!y.is_absent());
+    ///
+    /// let z: Presence<i32> = Presence::Some(42);
+    /// assert!(!z.is_absent());
+    /// ```
     #[inline]
     pub const fn is_absent(&self) -> bool {
         matches!(self, Presence::Absent)
     }
 
-    /// Returns true if the value is null
+    /// Returns `true` if the presence is [`Null`].
+    ///
+    /// [`Null`]: Presence::Null
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Null;
+    /// assert!(x.is_null());
+    ///
+    /// let y: Presence<i32> = Presence::Absent;
+    /// assert!(!y.is_null());
+    ///
+    /// let z: Presence<i32> = Presence::Some(42);
+    /// assert!(!z.is_null());
+    /// ```
     #[inline]
     pub const fn is_null(&self) -> bool {
         matches!(self, Presence::Null)
     }
 
-    /// Returns true if a concrete value is present.
+    /// Returns `true` if the presence is a [`Some`] value.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Some(42);
+    /// assert!(x.is_present());
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert!(!y.is_present());
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert!(!z.is_present());
+    /// ```
     #[inline]
     pub const fn is_present(&self) -> bool {
         matches!(self, Presence::Some(_))
     }
 
     /// Converts from `&Presence<T>` to `Presence<&T>`.
+    ///
+    /// Produces a new `Presence`, containing a reference into the original, leaving
+    /// the original in place.
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert_eq!(x.as_ref(), Presence::Some(&42));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.as_ref(), Presence::Null);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.as_ref(), Presence::Absent);
+    /// ```
     #[inline]
     pub const fn as_ref(&self) -> Presence<&T> {
         match *self {
@@ -61,8 +122,28 @@ impl<T> Presence<T> {
     }
 
     /// Converts from `&mut Presence<T>` to `Presence<&mut T>`.
+    ///
+    /// Produces a new `Presence`, containing a mutable reference into the original,
+    /// leaving the original in place.
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// match x.as_mut() {
+    ///     Presence::Some(v) => *v = 100,
+    ///     _ => {}
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.as_mut(), Presence::Null);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.as_mut(), Presence::Absent);
+    /// ```
     #[inline]
     pub const fn as_mut(&mut self) -> Presence<&mut T> {
         match *self {
@@ -72,9 +153,25 @@ impl<T> Presence<T> {
         }
     }
 
-    /// Convert Presence<T> to Option<Option<T>> for interop
+    /// Converts from `Presence<T>` to `Option<Option<T>>` for interoperability.
+    ///
+    /// This is useful when you need to work with code that uses nested `Option`s
+    /// to represent the same three-state concept as `Presence`.
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Some(42);
+    /// assert_eq!(x.to_nested_option(), Some(Some(42)));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.to_nested_option(), Some(None));
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.to_nested_option(), None);
+    /// ```
     #[inline]
     pub fn to_nested_option(self) -> Option<Option<T>> {
         match self {
@@ -88,9 +185,25 @@ impl<T> Presence<T> {
     // Getting to contained values
     /////////////////////////////////////////////////////////////////////////
 
-    /// Takes the value out of the Presence, leaving Absent in its place.
+    /// Takes the value out of the `Presence`, leaving [`Absent`] in its place.
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// let y = x.take();
+    /// assert_eq!(x, Presence::Absent);
+    /// assert_eq!(y, Presence::Some(42));
+    ///
+    /// let mut z: Presence<i32> = Presence::Null;
+    /// let w = z.take();
+    /// assert_eq!(z, Presence::Absent);
+    /// assert_eq!(w, Presence::Null);
+    /// ```
     #[inline]
     pub const fn take(&mut self) -> Presence<T> {
         let mut slot = Presence::Absent;
@@ -98,10 +211,29 @@ impl<T> Presence<T> {
         slot
     }
 
-    /// Returns the number of elements in the Presence (0, 1, or possibly 0 for Null/Absent).
-    /// This is primarily for iterator support.
+    /// Returns the number of elements in the `Presence`.
+    ///
+    /// This returns `1` if the presence contains a [`Some`] value, and `0` for
+    /// [`Null`] or [`Absent`]. This is primarily used for iterator support.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Some(42);
+    /// assert_eq!(x.len(), 1);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.len(), 0);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.len(), 0);
+    /// ```
     #[inline]
     pub const fn len(&self) -> usize {
         match self {
@@ -115,8 +247,29 @@ impl<T> Presence<T> {
     /////////////////////////////////////////////////////////////////////////
 
     /// Returns an iterator over the possibly contained value.
+    ///
+    /// The iterator yields one value if the presence is [`Some`], otherwise none.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// let mut iter = x.iter();
+    /// assert_eq!(iter.next(), Some(&42));
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// let mut iter = y.iter();
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// let mut iter = z.iter();
+    /// assert_eq!(iter.next(), None);
+    /// ```
     #[inline]
     pub const fn iter(&self) -> Iter<'_, T> {
         Iter {
@@ -127,8 +280,30 @@ impl<T> Presence<T> {
     }
 
     /// Returns a mutable iterator over the possibly contained value.
+    ///
+    /// The iterator yields one mutable reference if the presence is [`Some`], otherwise none.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// for v in x.iter_mut() {
+    ///     *v = 100;
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// let mut iter = y.iter_mut();
+    /// assert_eq!(iter.next(), None);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// let mut iter = z.iter_mut();
+    /// assert_eq!(iter.next(), None);
+    /// ```
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
@@ -156,9 +331,18 @@ impl<T: fmt::Display> fmt::Display for Presence<T> {
 
 // Default implementation
 impl<T> Default for Presence<T> {
-    /// Returns the default Presence value, which is Absent
+    /// Returns the default `Presence` value, which is [`Absent`].
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Default::default();
+    /// assert_eq!(x, Presence::Absent);
+    /// ```
     fn default() -> Presence<T> {
         Presence::Absent
     }
@@ -169,9 +353,29 @@ impl<T> IntoIterator for Presence<T> {
     type Item = T;
     type IntoIter = Item<T>;
 
-    /// Creates an iterator that yields the contained value if present
+    /// Returns a consuming iterator over the possibly contained value.
+    ///
+    /// The iterator yields one value if the presence is [`Some`], otherwise none.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
     /// # Examples
     ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// let v: Vec<_> = x.into_iter().collect();
+    /// assert_eq!(v, vec![42]);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// let v: Vec<_> = y.into_iter().collect();
+    /// assert_eq!(v, vec![]);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// let v: Vec<_> = z.into_iter().collect();
+    /// assert_eq!(v, vec![]);
+    /// ```
     fn into_iter(self) -> Self::IntoIter {
         Item { presence: self }
     }
@@ -180,6 +384,25 @@ impl<T> IntoIterator for Presence<T> {
 /////////////////////////////////////////////////////////////////////////////
 // The Presence Iterators
 //////////////////////////////////////////////////////////////////////////
+
+/// An iterator that moves out of a `Presence`.
+///
+/// This struct is created by the [`into_iter`] method on [`Presence`] (provided
+/// by the [`IntoIterator`] trait).
+///
+/// [`into_iter`]: IntoIterator::into_iter
+/// [`Presence`]: Presence
+///
+/// # Examples
+///
+/// ```
+/// use presence_rs::presence::Presence;
+///
+/// let x = Presence::Some(42);
+/// let mut iter = x.into_iter();
+/// assert_eq!(iter.next(), Some(42));
+/// assert_eq!(iter.next(), None);
+/// ```
 #[derive(Clone, Debug)]
 pub struct Item<A> {
     presence: Presence<A>,
@@ -222,6 +445,23 @@ impl<A> ExactSizeIterator for Item<A> {
 
 impl<A> FusedIterator for Item<A> {}
 
+/// An iterator over a reference to the `Some` variant of a `Presence`.
+///
+/// This struct is created by the [`iter`] method on [`Presence`].
+///
+/// [`iter`]: Presence::iter
+/// [`Presence`]: Presence
+///
+/// # Examples
+///
+/// ```
+/// use presence_rs::presence::Presence;
+///
+/// let x = Presence::Some(42);
+/// let mut iter = x.iter();
+/// assert_eq!(iter.next(), Some(&42));
+/// assert_eq!(iter.next(), None);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Iter<'a, A> {
     inner: Item<&'a A>,
@@ -257,6 +497,24 @@ impl<'a, A> ExactSizeIterator for Iter<'a, A> {
 
 impl<A> FusedIterator for Iter<'_, A> {}
 
+/// An iterator over a mutable reference to the `Some` variant of a `Presence`.
+///
+/// This struct is created by the [`iter_mut`] method on [`Presence`].
+///
+/// [`iter_mut`]: Presence::iter_mut
+/// [`Presence`]: Presence
+///
+/// # Examples
+///
+/// ```
+/// use presence_rs::presence::Presence;
+///
+/// let mut x = Presence::Some(42);
+/// for v in x.iter_mut() {
+///     *v = 100;
+/// }
+/// assert_eq!(x, Presence::Some(100));
+/// ```
 #[derive(Debug)]
 pub struct IterMut<'a, A> {
     inner: Item<&'a mut A>,

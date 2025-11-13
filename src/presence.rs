@@ -93,6 +93,95 @@ impl<T> Presence<T> {
         matches!(self, Presence::Some(_))
     }
 
+    /// Returns `true` if the presence is [`Some`] and the value inside of it matches a predicate.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<u32> = Presence::Some(2);
+    /// assert_eq!(x.is_some_and(|x| x > 1), true);
+    ///
+    /// let x: Presence<u32> = Presence::Some(0);
+    /// assert_eq!(x.is_some_and(|x| x > 1), false);
+    ///
+    /// let x: Presence<u32> = Presence::Null;
+    /// assert_eq!(x.is_some_and(|x| x > 1), false);
+    ///
+    /// let x: Presence<u32> = Presence::Absent;
+    /// assert_eq!(x.is_some_and(|x| x > 1), false);
+    /// ```
+    #[inline]
+    pub fn is_some_and(self, f: impl FnOnce(T) -> bool) -> bool {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null | Presence::Absent => false,
+        }
+    }
+
+    /// Returns `true` if the presence is [`Absent`] or the value inside matches a predicate.
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<u32> = Presence::Some(2);
+    /// assert_eq!(x.is_absent_or(|x| x > 1), true);
+    ///
+    /// let x: Presence<u32> = Presence::Some(0);
+    /// assert_eq!(x.is_absent_or(|x| x > 1), false);
+    ///
+    /// let x: Presence<u32> = Presence::Null;
+    /// assert_eq!(x.is_absent_or(|x| x > 1), false);
+    ///
+    /// let x: Presence<u32> = Presence::Absent;
+    /// assert_eq!(x.is_absent_or(|x| x > 1), true);
+    /// ```
+    #[inline]
+    pub fn is_absent_or(self, f: impl FnOnce(T) -> bool) -> bool {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null => false,
+            Presence::Absent => true,
+        }
+    }
+
+    /// Returns `true` if the presence is [`Null`] or [`Absent`], or the value inside matches a predicate.
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<u32> = Presence::Some(2);
+    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    ///
+    /// let x: Presence<u32> = Presence::Some(0);
+    /// assert_eq!(x.is_null_or(|x| x > 1), false);
+    ///
+    /// let x: Presence<u32> = Presence::Null;
+    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    ///
+    /// let x: Presence<u32> = Presence::Absent;
+    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    /// ```
+    #[inline]
+    pub fn is_null_or(self, f: impl FnOnce(T) -> bool) -> bool {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null | Presence::Absent => true,
+        }
+    }
+
     /// Converts from `&Presence<T>` to `Presence<&T>`.
     ///
     /// Produces a new `Presence`, containing a reference into the original, leaving

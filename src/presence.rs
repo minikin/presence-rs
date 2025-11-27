@@ -242,6 +242,81 @@ impl<T> Presence<T> {
         }
     }
 
+    /// Converts from `Pin<&Presence<T>>` to `Presence<Pin<&T>>`.
+    ///
+    /// This is useful when you have a pinned presence and want to get a presence
+    /// of pinned references to the inner value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    /// use std::pin::Pin;
+    ///
+    /// let x = Presence::Some(42);
+    /// let pinned = Pin::new(&x);
+    /// let result = pinned.as_pin_ref();
+    /// assert!(matches!(result, Presence::Some(_)));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// let pinned = Pin::new(&y);
+    /// assert_eq!(pinned.as_pin_ref(), Presence::Null);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// let pinned = Pin::new(&z);
+    /// assert_eq!(pinned.as_pin_ref(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub const fn as_pin_ref(self: std::pin::Pin<&Self>) -> Presence<std::pin::Pin<&T>> {
+        match std::pin::Pin::get_ref(self) {
+            Presence::Some(val) => unsafe {
+                Presence::Some(std::pin::Pin::new_unchecked(val))
+            },
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Converts from `Pin<&mut Presence<T>>` to `Presence<Pin<&mut T>>`.
+    ///
+    /// This is useful when you have a pinned mutable presence and want to get a presence
+    /// of pinned mutable references to the inner value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    /// use std::pin::Pin;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// let mut pinned = Pin::new(&mut x);
+    /// match pinned.as_mut().as_pin_mut() {
+    ///     Presence::Some(mut v) => {
+    ///         *v = 100;
+    ///     }
+    ///     _ => {}
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// let mut pinned = Pin::new(&mut y);
+    /// assert_eq!(pinned.as_mut().as_pin_mut(), Presence::Null);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// let mut pinned = Pin::new(&mut z);
+    /// assert_eq!(pinned.as_mut().as_pin_mut(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub const fn as_pin_mut(self: std::pin::Pin<&mut Self>) -> Presence<std::pin::Pin<&mut T>> {
+        unsafe {
+            match std::pin::Pin::get_unchecked_mut(self) {
+                Presence::Some(val) => Presence::Some(std::pin::Pin::new_unchecked(val)),
+                Presence::Null => Presence::Null,
+                Presence::Absent => Presence::Absent,
+            }
+        }
+    }
+
     /// Converts from `Presence<T>` to `Option<Option<T>>` for interoperability.
     ///
     /// This is useful when you need to work with code that uses nested `Option`s

@@ -381,6 +381,76 @@ impl<T> Presence<T> {
         }
     }
 
+    /// Converts from `&Presence<T>` to `Presence<&T::Target>`.
+    ///
+    /// Leaves [`Null`] and [`Absent`] values unchanged.
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<String> = Presence::Some("hello".to_string());
+    /// assert_eq!(x.as_deref(), Presence::Some("hello"));
+    ///
+    /// let y: Presence<String> = Presence::Null;
+    /// assert_eq!(y.as_deref(), Presence::Null);
+    ///
+    /// let z: Presence<String> = Presence::Absent;
+    /// assert_eq!(z.as_deref(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn as_deref(&self) -> Presence<&T::Target>
+    where
+        T: std::ops::Deref,
+    {
+        match self.as_ref() {
+            Presence::Some(val) => Presence::Some(val.deref()),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Converts from `&mut Presence<T>` to `Presence<&mut T::Target>`.
+    ///
+    /// Leaves [`Null`] and [`Absent`] values unchanged.
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x: Presence<String> = Presence::Some("hello".to_string());
+    /// match x.as_deref_mut() {
+    ///     Presence::Some(v) => v.make_ascii_uppercase(),
+    ///     _ => {}
+    /// }
+    /// assert_eq!(x, Presence::Some("HELLO".to_string()));
+    ///
+    /// let mut y: Presence<String> = Presence::Null;
+    /// assert_eq!(y.as_deref_mut(), Presence::Null);
+    ///
+    /// let mut z: Presence<String> = Presence::Absent;
+    /// assert_eq!(z.as_deref_mut(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn as_deref_mut(&mut self) -> Presence<&mut T::Target>
+    where
+        T: std::ops::DerefMut,
+    {
+        match self.as_mut() {
+            Presence::Some(val) => Presence::Some(val.deref_mut()),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
     /// Converts from `Presence<T>` to `Option<Option<T>>` for interoperability.
     ///
     /// This is useful when you need to work with code that uses nested `Option`s

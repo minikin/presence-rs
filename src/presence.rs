@@ -317,6 +317,70 @@ impl<T> Presence<T> {
         }
     }
 
+    /// Returns a slice containing the value if the presence is [`Some`].
+    ///
+    /// Returns an empty slice for [`Null`] or [`Absent`] variants.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert_eq!(x.as_slice(), &[42]);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.as_slice(), &[]);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.as_slice(), &[]);
+    /// ```
+    #[inline]
+    pub const fn as_slice(&self) -> &[T] {
+        match self {
+            Presence::Some(val) => std::slice::from_ref(val),
+            Presence::Null | Presence::Absent => &[],
+        }
+    }
+
+    /// Returns a mutable slice containing the value if the presence is [`Some`].
+    ///
+    /// Returns an empty mutable slice for [`Null`] or [`Absent`] variants.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// let slice = x.as_mut_slice();
+    /// if let Some(first) = slice.first_mut() {
+    ///     *first = 100;
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.as_mut_slice(), &mut []);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.as_mut_slice(), &mut []);
+    /// ```
+    #[inline]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        match self {
+            Presence::Some(val) => std::slice::from_mut(val),
+            Presence::Null | Presence::Absent => &mut [],
+        }
+    }
+
     /// Converts from `Presence<T>` to `Option<Option<T>>` for interoperability.
     ///
     /// This is useful when you need to work with code that uses nested `Option`s

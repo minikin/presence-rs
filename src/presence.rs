@@ -483,6 +483,98 @@ impl<T> Presence<T> {
     // Getting to contained values
     /////////////////////////////////////////////////////////////////////////
 
+    /// Returns the contained [`Some`] value, consuming the `self` value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is [`Null`] or [`Absent`] with a custom panic message provided by `msg`.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("value");
+    /// assert_eq!(x.expect("should have a value"), "value");
+    /// ```
+    ///
+    /// ```should_panic
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<&str> = Presence::Null;
+    /// x.expect("the value was null"); // panics with `the value was null`
+    /// ```
+    ///
+    /// ```should_panic
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<&str> = Presence::Absent;
+    /// x.expect("the value was absent"); // panics with `the value was absent`
+    /// ```
+    #[inline]
+    #[track_caller]
+    pub fn expect(self, msg: &str) -> T {
+        match self {
+            Presence::Some(val) => val,
+            Presence::Null => panic!("{}: value was Null", msg),
+            Presence::Absent => panic!("{}: value was Absent", msg),
+        }
+    }
+
+    /// Returns the contained [`Some`] value, consuming the `self` value.
+    ///
+    /// Because this function may panic, its use is generally discouraged.
+    /// Instead, prefer to use pattern matching and handle the [`Null`] and [`Absent`]
+    /// cases explicitly, or call [`unwrap_or`], [`unwrap_or_else`], or
+    /// [`unwrap_or_default`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`unwrap_or`]: Presence::unwrap_or
+    /// [`unwrap_or_else`]: Presence::unwrap_or_else
+    /// [`unwrap_or_default`]: Presence::unwrap_or_default
+    ///
+    /// # Panics
+    ///
+    /// Panics if the value is [`Null`] or [`Absent`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("air");
+    /// assert_eq!(x.unwrap(), "air");
+    /// ```
+    ///
+    /// ```should_panic
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<&str> = Presence::Null;
+    /// x.unwrap(); // panics
+    /// ```
+    ///
+    /// ```should_panic
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<&str> = Presence::Absent;
+    /// x.unwrap(); // panics
+    /// ```
+    #[inline]
+    #[track_caller]
+    pub fn unwrap(self) -> T {
+        match self {
+            Presence::Some(val) => val,
+            Presence::Null => panic!("called `Presence::unwrap()` on a `Null` value"),
+            Presence::Absent => panic!("called `Presence::unwrap()` on an `Absent` value"),
+        }
+    }
+
     /// Takes the value out of the `Presence`, leaving [`Absent`] in its place.
     ///
     /// [`Absent`]: Presence::Absent

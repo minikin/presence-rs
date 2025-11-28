@@ -729,6 +729,180 @@ impl<T> Presence<T> {
     }
 
     /////////////////////////////////////////////////////////////////////////
+    // Transforming contained values
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Maps a `Presence<T>` to `Presence<U>` by applying a function to a contained value.
+    ///
+    /// Leaves [`Null`] and [`Absent`] values unchanged.
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("hello");
+    /// assert_eq!(x.map(|s| s.len()), Presence::Some(5));
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.map(|s| s.len()), Presence::Null);
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.map(|s| s.len()), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn map<U, F>(self, f: F) -> Presence<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Presence::Some(val) => Presence::Some(f(val)),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Calls the provided closure with the contained value (if [`Some`]).
+    ///
+    /// Returns the original presence unchanged.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(4)
+    ///     .inspect(|x| println!("got: {}", x))
+    ///     .map(|x| x * 2);
+    /// assert_eq!(x, Presence::Some(8));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// let result = y.inspect(|x| println!("got: {}", x));
+    /// assert_eq!(result, Presence::Null);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// let result = z.inspect(|x| println!("got: {}", x));
+    /// assert_eq!(result, Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn inspect<F>(self, f: F) -> Self
+    where
+        F: FnOnce(&T),
+    {
+        if let Presence::Some(ref val) = self {
+            f(val);
+        }
+        self
+    }
+
+    /// Returns the provided default result (if [`Null`] or [`Absent`]),
+    /// or applies a function to the contained value (if [`Some`]).
+    ///
+    /// Arguments passed to `map_or` are eagerly evaluated; if you are passing
+    /// the result of a function call, it is recommended to use [`map_or_else`],
+    /// which is lazily evaluated.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`map_or_else`]: Presence::map_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("foo");
+    /// assert_eq!(x.map_or(42, |v| v.len()), 3);
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.map_or(42, |v| v.len()), 42);
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.map_or(42, |v| v.len()), 42);
+    /// ```
+    #[inline]
+    pub fn map_or<U, F>(self, default: U, f: F) -> U
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null | Presence::Absent => default,
+        }
+    }
+
+    /// Computes a default function result (if [`Null`] or [`Absent`]),
+    /// or applies a different function to the contained value (if [`Some`]).
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("foo");
+    /// assert_eq!(x.map_or_else(|| 42, |v| v.len()), 3);
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.map_or_else(|| 42, |v| v.len()), 42);
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.map_or_else(|| 42, |v| v.len()), 42);
+    /// ```
+    #[inline]
+    pub fn map_or_else<U, D, F>(self, default: D, f: F) -> U
+    where
+        D: FnOnce() -> U,
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null | Presence::Absent => default(),
+        }
+    }
+
+    /// Maps a `Presence<T>` to `U` by applying a function to a contained value,
+    /// or returns the default value of `U` if [`Null`] or [`Absent`].
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("foo");
+    /// assert_eq!(x.map_or_default(|v| v.len()), 3);
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.map_or_default(|v| v.len()), 0);
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.map_or_default(|v| v.len()), 0);
+    /// ```
+    #[inline]
+    pub fn map_or_default<U, F>(self, f: F) -> U
+    where
+        F: FnOnce(T) -> U,
+        U: Default,
+    {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null | Presence::Absent => Default::default(),
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////
     // Iterator constructors
     /////////////////////////////////////////////////////////////////////////
 

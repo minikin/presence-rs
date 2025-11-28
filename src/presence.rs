@@ -575,6 +575,102 @@ impl<T> Presence<T> {
         }
     }
 
+    /// Returns the contained [`Some`] value or a provided default.
+    ///
+    /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing
+    /// the result of a function call, it is recommended to use [`unwrap_or_else`],
+    /// which is lazily evaluated.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`unwrap_or_else`]: Presence::unwrap_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("value");
+    /// assert_eq!(x.unwrap_or("default"), "value");
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.unwrap_or("default"), "default");
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.unwrap_or("default"), "default");
+    /// ```
+    #[inline]
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Presence::Some(val) => val,
+            Presence::Null | Presence::Absent => default,
+        }
+    }
+
+    /// Returns the contained [`Some`] value or computes it from a closure.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(2);
+    /// assert_eq!(x.unwrap_or_else(|| 10), 2);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.unwrap_or_else(|| 10), 10);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.unwrap_or_else(|| 10), 10);
+    /// ```
+    #[inline]
+    pub fn unwrap_or_else<F>(self, f: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        match self {
+            Presence::Some(val) => val,
+            Presence::Null | Presence::Absent => f(),
+        }
+    }
+
+    /// Returns the contained [`Some`] value or a default.
+    ///
+    /// Consumes the `self` argument then, if [`Some`], returns the contained
+    /// value, otherwise if [`Null`] or [`Absent`], returns the [default value] for that
+    /// type.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [default value]: Default::default
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Some(42);
+    /// assert_eq!(x.unwrap_or_default(), 42);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.unwrap_or_default(), 0);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.unwrap_or_default(), 0);
+    /// ```
+    #[inline]
+    pub fn unwrap_or_default(self) -> T
+    where
+        T: Default,
+    {
+        match self {
+            Presence::Some(val) => val,
+            Presence::Null | Presence::Absent => Default::default(),
+        }
+    }
+
     /// Takes the value out of the `Presence`, leaving [`Absent`] in its place.
     ///
     /// [`Absent`]: Presence::Absent

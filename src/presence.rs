@@ -903,6 +903,80 @@ impl<T> Presence<T> {
     }
 
     /////////////////////////////////////////////////////////////////////////
+    // Result conversions
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Transforms the `Presence<T>` into a [`Result<T, E>`], mapping [`Some(v)`] to
+    /// [`Ok(v)`] and [`Null`] or [`Absent`] to [`Err(err)`].
+    ///
+    /// Arguments passed to `ok_or` are eagerly evaluated; if you are passing the
+    /// result of a function call, it is recommended to use [`ok_or_else`], which is
+    /// lazily evaluated.
+    ///
+    /// [`Some(v)`]: Presence::Some
+    /// [`Ok(v)`]: Ok
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`Err(err)`]: Err
+    /// [`ok_or_else`]: Presence::ok_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("foo");
+    /// assert_eq!(x.ok_or(0), Ok("foo"));
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.ok_or(0), Err(0));
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.ok_or(0), Err(0));
+    /// ```
+    #[inline]
+    pub fn ok_or<E>(self, err: E) -> Result<T, E> {
+        match self {
+            Presence::Some(val) => Ok(val),
+            Presence::Null | Presence::Absent => Err(err),
+        }
+    }
+
+    /// Transforms the `Presence<T>` into a [`Result<T, E>`], mapping [`Some(v)`] to
+    /// [`Ok(v)`] and [`Null`] or [`Absent`] to [`Err(err())`].
+    ///
+    /// [`Some(v)`]: Presence::Some
+    /// [`Ok(v)`]: Ok
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`Err(err())`]: Err
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some("foo");
+    /// assert_eq!(x.ok_or_else(|| 0), Ok("foo"));
+    ///
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(y.ok_or_else(|| 0), Err(0));
+    ///
+    /// let z: Presence<&str> = Presence::Absent;
+    /// assert_eq!(z.ok_or_else(|| 0), Err(0));
+    /// ```
+    #[inline]
+    pub fn ok_or_else<E, F>(self, err: F) -> Result<T, E>
+    where
+        F: FnOnce() -> E,
+    {
+        match self {
+            Presence::Some(val) => Ok(val),
+            Presence::Null | Presence::Absent => Err(err()),
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////
     // Iterator constructors
     /////////////////////////////////////////////////////////////////////////
 

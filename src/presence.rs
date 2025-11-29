@@ -977,6 +977,224 @@ impl<T> Presence<T> {
     }
 
     /////////////////////////////////////////////////////////////////////////
+    // Boolean operations on the values, eager and lazy
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Returns [`Absent`] or [`Null`] if the presence is [`Absent`] or [`Null`], otherwise returns `optb`.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(2);
+    /// let y: Presence<&str> = Presence::Null;
+    /// assert_eq!(x.and(y), Presence::Null);
+    ///
+    /// let x: Presence<u32> = Presence::Null;
+    /// let y = Presence::Some("foo");
+    /// assert_eq!(x.and(y), Presence::Null);
+    ///
+    /// let x = Presence::Some(2);
+    /// let y = Presence::Some("foo");
+    /// assert_eq!(x.and(y), Presence::Some("foo"));
+    ///
+    /// let x: Presence<u32> = Presence::Absent;
+    /// let y = Presence::Some("foo");
+    /// assert_eq!(x.and(y), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn and<U>(self, optb: Presence<U>) -> Presence<U> {
+        match self {
+            Presence::Some(_) => optb,
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Returns [`Absent`] or [`Null`] if the presence is [`Absent`] or [`Null`], otherwise calls `f` with the
+    /// wrapped value and returns the result.
+    ///
+    /// Some languages call this operation flatmap.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// fn sq_then_to_string(x: u32) -> Presence<String> {
+    ///     Presence::Some((x * x).to_string())
+    /// }
+    ///
+    /// assert_eq!(Presence::Some(2).and_then(sq_then_to_string), Presence::Some(4.to_string()));
+    /// assert_eq!(Presence::Null.and_then(sq_then_to_string), Presence::Null);
+    /// assert_eq!(Presence::Absent.and_then(sq_then_to_string), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn and_then<U, F>(self, f: F) -> Presence<U>
+    where
+        F: FnOnce(T) -> Presence<U>,
+    {
+        match self {
+            Presence::Some(val) => f(val),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Returns [`Absent`] if the presence is [`Absent`], [`Null`] if the presence is [`Null`],
+    /// and returns the presence unchanged if the predicate returns `true`, otherwise returns [`Absent`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// fn is_even(n: &i32) -> bool {
+    ///     n % 2 == 0
+    /// }
+    ///
+    /// assert_eq!(Presence::Some(4).filter(is_even), Presence::Some(4));
+    /// assert_eq!(Presence::Some(3).filter(is_even), Presence::Absent);
+    /// assert_eq!(Presence::Null.filter(is_even), Presence::Null);
+    /// assert_eq!(Presence::Absent.filter(is_even), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn filter<P>(self, predicate: P) -> Self
+    where
+        P: FnOnce(&T) -> bool,
+    {
+        match self {
+            Presence::Some(ref val) if predicate(val) => self,
+            Presence::Some(_) => Presence::Absent,
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Returns the presence if it contains a value, otherwise returns `optb`.
+    ///
+    /// Arguments passed to `or` are eagerly evaluated; if you are passing the
+    /// result of a function call, it is recommended to use [`or_else`], which is
+    /// lazily evaluated.
+    ///
+    /// [`or_else`]: Presence::or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(2);
+    /// let y = Presence::Null;
+    /// assert_eq!(x.or(y), Presence::Some(2));
+    ///
+    /// let x = Presence::Null;
+    /// let y = Presence::Some(100);
+    /// assert_eq!(x.or(y), Presence::Some(100));
+    ///
+    /// let x = Presence::Some(2);
+    /// let y = Presence::Some(100);
+    /// assert_eq!(x.or(y), Presence::Some(2));
+    ///
+    /// let x: Presence<i32> = Presence::Null;
+    /// let y = Presence::Null;
+    /// assert_eq!(x.or(y), Presence::Null);
+    ///
+    /// let x: Presence<i32> = Presence::Absent;
+    /// let y = Presence::Null;
+    /// assert_eq!(x.or(y), Presence::Null);
+    /// ```
+    #[inline]
+    pub fn or(self, optb: Presence<T>) -> Presence<T> {
+        match self {
+            Presence::Some(_) => self,
+            Presence::Null | Presence::Absent => optb,
+        }
+    }
+
+    /// Returns the presence if it contains a value, otherwise calls `f` and
+    /// returns the result.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// fn nobody() -> Presence<&'static str> { Presence::Null }
+    /// fn vikings() -> Presence<&'static str> { Presence::Some("vikings") }
+    ///
+    /// assert_eq!(Presence::Some("barbarians").or_else(vikings), Presence::Some("barbarians"));
+    /// assert_eq!(Presence::Null.or_else(vikings), Presence::Some("vikings"));
+    /// assert_eq!(Presence::Null.or_else(nobody), Presence::Null);
+    /// assert_eq!(Presence::Absent.or_else(vikings), Presence::Some("vikings"));
+    /// ```
+    #[inline]
+    pub fn or_else<F>(self, f: F) -> Presence<T>
+    where
+        F: FnOnce() -> Presence<T>,
+    {
+        match self {
+            Presence::Some(_) => self,
+            Presence::Null | Presence::Absent => f(),
+        }
+    }
+
+    /// Returns [`Some`] if exactly one of `self`, `optb` is [`Some`], otherwise returns [`Absent`] or [`Null`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(2);
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(x.xor(y), Presence::Some(2));
+    ///
+    /// let x: Presence<i32> = Presence::Null;
+    /// let y = Presence::Some(2);
+    /// assert_eq!(x.xor(y), Presence::Some(2));
+    ///
+    /// let x = Presence::Some(2);
+    /// let y = Presence::Some(2);
+    /// assert_eq!(x.xor(y), Presence::Absent);
+    ///
+    /// let x: Presence<i32> = Presence::Null;
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(x.xor(y), Presence::Null);
+    ///
+    /// let x: Presence<i32> = Presence::Absent;
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(x.xor(y), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn xor(self, optb: Presence<T>) -> Presence<T> {
+        match (self, optb) {
+            (Presence::Some(a), Presence::Null | Presence::Absent) => Presence::Some(a),
+            (Presence::Null | Presence::Absent, Presence::Some(b)) => Presence::Some(b),
+            (Presence::Some(_), Presence::Some(_)) => Presence::Absent,
+            (Presence::Absent, _) | (_, Presence::Absent) => Presence::Absent,
+            (Presence::Null, Presence::Null) => Presence::Null,
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////
     // Iterator constructors
     /////////////////////////////////////////////////////////////////////////
 

@@ -697,6 +697,140 @@ impl<T> Presence<T> {
         slot
     }
 
+    /// Inserts `value` into the presence, then returns a mutable reference to it.
+    ///
+    /// If the presence already contained a value, the old value is dropped.
+    ///
+    /// See also [`get_or_insert`], which doesn't update the value if
+    /// the presence is [`Some`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`get_or_insert`]: Presence::get_or_insert
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut opt = Presence::Null;
+    /// let val = opt.insert(1);
+    /// assert_eq!(*val, 1);
+    /// assert_eq!(opt.unwrap(), 1);
+    ///
+    /// let val = opt.insert(2);
+    /// assert_eq!(*val, 2);
+    /// *val = 3;
+    /// assert_eq!(opt.unwrap(), 3);
+    /// ```
+    #[inline]
+    pub fn insert(&mut self, value: T) -> &mut T {
+        *self = Presence::Some(value);
+        match self {
+            Presence::Some(v) => v,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Inserts `value` into the presence if it is [`Null`] or [`Absent`], then
+    /// returns a mutable reference to the contained value.
+    ///
+    /// See also [`insert`], which updates the value even if
+    /// the presence already contains [`Some`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`insert`]: Presence::insert
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Null;
+    ///
+    /// {
+    ///     let y: &mut u32 = x.get_or_insert(5);
+    ///     assert_eq!(y, &5);
+    ///
+    ///     *y = 7;
+    /// }
+    ///
+    /// assert_eq!(x, Presence::Some(7));
+    /// ```
+    #[inline]
+    pub fn get_or_insert(&mut self, value: T) -> &mut T {
+        if matches!(self, Presence::Null | Presence::Absent) {
+            *self = Presence::Some(value);
+        }
+        match self {
+            Presence::Some(v) => v,
+            _ => unreachable!(),
+        }
+    }
+
+    /// Inserts the default value into the presence if it is [`Null`] or [`Absent`], then
+    /// returns a mutable reference to the contained value.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x: Presence<u32> = Presence::Null;
+    /// let y: &mut u32 = x.get_or_insert_default();
+    /// assert_eq!(y, &0);
+    ///
+    /// let mut x = Presence::Some(10);
+    /// let y: &mut u32 = x.get_or_insert_default();
+    /// assert_eq!(y, &10);
+    /// ```
+    #[inline]
+    pub fn get_or_insert_default(&mut self) -> &mut T
+    where
+        T: Default,
+    {
+        self.get_or_insert_with(Default::default)
+    }
+
+    /// Inserts a value computed from `f` into the presence if it is [`Null`] or [`Absent`],
+    /// then returns a mutable reference to the contained value.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Null;
+    /// let y: &mut u32 = x.get_or_insert_with(|| 5);
+    /// assert_eq!(y, &5);
+    ///
+    /// let mut x = Presence::Some(10);
+    /// let y: &mut u32 = x.get_or_insert_with(|| 15);
+    /// assert_eq!(y, &10);
+    /// ```
+    #[inline]
+    pub fn get_or_insert_with<F>(&mut self, f: F) -> &mut T
+    where
+        F: FnOnce() -> T,
+    {
+        if matches!(self, Presence::Null | Presence::Absent) {
+            *self = Presence::Some(f());
+        }
+        match self {
+            Presence::Some(v) => v,
+            _ => unreachable!(),
+        }
+    }
+
     /// Returns the number of elements in the `Presence`.
     ///
     /// This returns `1` if the presence contains a [`Some`] value, and `0` for

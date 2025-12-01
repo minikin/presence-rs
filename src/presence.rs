@@ -1395,6 +1395,120 @@ impl<T> Presence<T> {
     }
 
     /////////////////////////////////////////////////////////////////////////
+    // Zip operations
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Zips `self` with another `Presence`.
+    ///
+    /// If `self` is `Some(s)` and `other` is `Some(o)`, this method returns `Some((s, o))`.
+    /// Otherwise, returns `Absent` if either is `Absent`, or `Null` if both are `Null`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(1);
+    /// let y = Presence::Some("hi");
+    /// let z: Presence<i32> = Presence::Null;
+    ///
+    /// assert_eq!(x.zip(y), Presence::Some((1, "hi")));
+    /// assert_eq!(x.zip(z), Presence::Null);
+    ///
+    /// let a: Presence<i32> = Presence::Absent;
+    /// let b = Presence::Some("hello");
+    /// assert_eq!(a.zip(b), Presence::Absent);
+    ///
+    /// let c: Presence<i32> = Presence::Null;
+    /// let d: Presence<&str> = Presence::Null;
+    /// assert_eq!(c.zip(d), Presence::Null);
+    /// ```
+    #[inline]
+    pub fn zip<U>(self, other: Presence<U>) -> Presence<(T, U)> {
+        match (self, other) {
+            (Presence::Some(a), Presence::Some(b)) => Presence::Some((a, b)),
+            (Presence::Absent, _) | (_, Presence::Absent) => Presence::Absent,
+            (Presence::Null, _) | (_, Presence::Null) => Presence::Null,
+        }
+    }
+
+    /// Zips `self` and another `Presence` with function `f`.
+    ///
+    /// If `self` is `Some(s)` and `other` is `Some(o)`, this method returns `Some(f(s, o))`.
+    /// Otherwise, returns `Absent` if either is `Absent`, or `Null` if both are `Null`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// #[derive(Debug, PartialEq)]
+    /// struct Point {
+    ///     x: f64,
+    ///     y: f64,
+    /// }
+    ///
+    /// impl Point {
+    ///     fn new(x: f64, y: f64) -> Self {
+    ///         Point { x, y }
+    ///     }
+    /// }
+    ///
+    /// let x = Presence::Some(17.5);
+    /// let y = Presence::Some(42.7);
+    ///
+    /// assert_eq!(x.zip_with(y, Point::new), Presence::Some(Point { x: 17.5, y: 42.7 }));
+    ///
+    /// let z: Presence<f64> = Presence::Null;
+    /// assert_eq!(x.zip_with(z, Point::new), Presence::Null);
+    ///
+    /// let a: Presence<f64> = Presence::Absent;
+    /// assert_eq!(a.zip_with(y, Point::new), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn zip_with<U, F, R>(self, other: Presence<U>, f: F) -> Presence<R>
+    where
+        F: FnOnce(T, U) -> R,
+    {
+        match (self, other) {
+            (Presence::Some(a), Presence::Some(b)) => Presence::Some(f(a, b)),
+            (Presence::Absent, _) | (_, Presence::Absent) => Presence::Absent,
+            (Presence::Null, _) | (_, Presence::Null) => Presence::Null,
+        }
+    }
+
+    /// Reduces `self` and another `Presence` with function `f`.
+    ///
+    /// This is an alias for [`zip_with`]. It combines two `Presence` values by applying
+    /// a function when both contain `Some` values.
+    ///
+    /// [`zip_with`]: Presence::zip_with
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(5);
+    /// let y = Presence::Some(10);
+    ///
+    /// assert_eq!(x.reduce(y, |a, b| a + b), Presence::Some(15));
+    ///
+    /// let z: Presence<i32> = Presence::Null;
+    /// assert_eq!(x.reduce(z, |a, b| a + b), Presence::Null);
+    ///
+    /// let a: Presence<i32> = Presence::Absent;
+    /// assert_eq!(a.reduce(y, |a, b| a + b), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn reduce<U, R, F>(self, other: Presence<U>, f: F) -> Presence<R>
+    where
+        F: FnOnce(T, U) -> R,
+    {
+        self.zip_with(other, f)
+    }
+
+    /////////////////////////////////////////////////////////////////////////
     // Iterator constructors
     /////////////////////////////////////////////////////////////////////////
 

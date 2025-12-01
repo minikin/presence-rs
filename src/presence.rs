@@ -697,6 +697,72 @@ impl<T> Presence<T> {
         slot
     }
 
+    /// Takes the value out of the `Presence` if the predicate returns `true`,
+    /// leaving [`Absent`] in its place.
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// let old = x.take_if(|v| *v == 42);
+    /// assert_eq!(x, Presence::Absent);
+    /// assert_eq!(old, Presence::Some(42));
+    ///
+    /// let mut y = Presence::Some(10);
+    /// let old = y.take_if(|v| *v == 42);
+    /// assert_eq!(y, Presence::Some(10));
+    /// assert_eq!(old, Presence::Absent);
+    ///
+    /// let mut z: Presence<i32> = Presence::Null;
+    /// let old = z.take_if(|v| *v == 42);
+    /// assert_eq!(z, Presence::Null);
+    /// assert_eq!(old, Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn take_if<P>(&mut self, predicate: P) -> Presence<T>
+    where
+        P: FnOnce(&T) -> bool,
+    {
+        match self {
+            Presence::Some(val) if predicate(val) => self.take(),
+            _ => Presence::Absent,
+        }
+    }
+
+    /// Replaces the actual value in the `Presence` by the value given in parameter,
+    /// returning the old value if present, leaving a [`Some`] in its place.
+    ///
+    /// [`Some`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = Presence::Some(2);
+    /// let old = x.replace(5);
+    /// assert_eq!(x, Presence::Some(5));
+    /// assert_eq!(old, Presence::Some(2));
+    ///
+    /// let mut y = Presence::Null;
+    /// let old = y.replace(3);
+    /// assert_eq!(y, Presence::Some(3));
+    /// assert_eq!(old, Presence::Null);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// let old = z.replace(7);
+    /// assert_eq!(z, Presence::Some(7));
+    /// assert_eq!(old, Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn replace(&mut self, value: T) -> Presence<T> {
+        std::mem::replace(self, Presence::Some(value))
+    }
+
     /// Inserts `value` into the presence, then returns a mutable reference to it.
     ///
     /// If the presence already contained a value, the old value is dropped.

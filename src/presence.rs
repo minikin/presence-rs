@@ -1508,6 +1508,39 @@ impl<T> Presence<T> {
         self.zip_with(other, f)
     }
 
+    /// Unzips a presence containing a tuple of two values.
+    ///
+    /// If `self` is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
+    /// Otherwise, returns `(Null, Null)` if `self` is `Null`, or `(Absent, Absent)` if `self` is `Absent`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some((1, "hi"));
+    /// let y: Presence<(i32, &str)> = Presence::Null;
+    /// let z: Presence<(i32, &str)> = Presence::Absent;
+    ///
+    /// assert_eq!(x.unzip(), (Presence::Some(1), Presence::Some("hi")));
+    /// assert_eq!(y.unzip(), (Presence::Null, Presence::Null));
+    /// assert_eq!(z.unzip(), (Presence::Absent, Presence::Absent));
+    /// ```
+    #[inline]
+    pub fn unzip<A, B>(self) -> (Presence<A>, Presence<B>)
+    where
+        T: Into<(A, B)>,
+    {
+        match self {
+            Presence::Some(val) => {
+                let (a, b) = val.into();
+                (Presence::Some(a), Presence::Some(b))
+            }
+            Presence::Null => (Presence::Null, Presence::Null),
+            Presence::Absent => (Presence::Absent, Presence::Absent),
+        }
+    }
+
     /////////////////////////////////////////////////////////////////////////
     // Iterator constructors
     /////////////////////////////////////////////////////////////////////////

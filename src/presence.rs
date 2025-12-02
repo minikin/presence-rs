@@ -1848,3 +1848,143 @@ impl<'a, A> ExactSizeIterator for IterMut<'a, A> {
 }
 
 impl<A> FusedIterator for IterMut<'_, A> {}
+
+/////////////////////////////////////////////////////////////////////////////
+// Trait implementations for Presence<&T>
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T> Presence<&T> {
+    /// Maps a `Presence<&T>` to a `Presence<T>` by copying the contents of the
+    /// presence.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = 12;
+    /// let opt_x = Presence::Some(&x);
+    /// assert_eq!(opt_x, Presence::Some(&12));
+    /// let copied = opt_x.copied();
+    /// assert_eq!(copied, Presence::Some(12));
+    ///
+    /// let y: Presence<&i32> = Presence::Null;
+    /// assert_eq!(y.copied(), Presence::Null);
+    ///
+    /// let z: Presence<&i32> = Presence::Absent;
+    /// assert_eq!(z.copied(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub const fn copied(self) -> Presence<T>
+    where
+        T: Copy,
+    {
+        match self {
+            Presence::Some(&val) => Presence::Some(val),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Maps a `Presence<&T>` to a `Presence<T>` by cloning the contents of the
+    /// presence.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = 12;
+    /// let opt_x = Presence::Some(&x);
+    /// assert_eq!(opt_x, Presence::Some(&12));
+    /// let cloned = opt_x.cloned();
+    /// assert_eq!(cloned, Presence::Some(12));
+    ///
+    /// let y: Presence<&i32> = Presence::Null;
+    /// assert_eq!(y.cloned(), Presence::Null);
+    ///
+    /// let z: Presence<&i32> = Presence::Absent;
+    /// assert_eq!(z.cloned(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn cloned(self) -> Presence<T>
+    where
+        T: Clone,
+    {
+        match self {
+            Presence::Some(val) => Presence::Some(val.clone()),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Trait implementations for Presence<&mut T>
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T> Presence<&mut T> {
+    /// Maps a `Presence<&mut T>` to a `Presence<T>` by copying the contents of the
+    /// presence.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = 12;
+    /// let opt_x = Presence::Some(&mut x);
+    /// assert_eq!(opt_x, Presence::Some(&mut 12));
+    /// let copied = opt_x.copied();
+    /// assert_eq!(copied, Presence::Some(12));
+    ///
+    /// let mut y: Presence<&mut i32> = Presence::Null;
+    /// assert_eq!(y.copied(), Presence::Null);
+    ///
+    /// let mut z: Presence<&mut i32> = Presence::Absent;
+    /// assert_eq!(z.copied(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub const fn copied(self) -> Presence<T>
+    where
+        T: Copy,
+    {
+        match self {
+            Presence::Some(&mut val) => Presence::Some(val),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Maps a `Presence<&mut T>` to a `Presence<T>` by cloning the contents of the
+    /// presence.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let mut x = 12;
+    /// let opt_x = Presence::Some(&mut x);
+    /// assert_eq!(opt_x, Presence::Some(&mut 12));
+    /// let cloned = opt_x.cloned();
+    /// assert_eq!(cloned, Presence::Some(12));
+    ///
+    /// let mut y: Presence<&mut i32> = Presence::Null;
+    /// assert_eq!(y.cloned(), Presence::Null);
+    ///
+    /// let mut z: Presence<&mut i32> = Presence::Absent;
+    /// assert_eq!(z.cloned(), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn cloned(self) -> Presence<T>
+    where
+        T: Clone,
+    {
+        match self {
+            Presence::Some(val) => Presence::Some(val.clone()),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+}

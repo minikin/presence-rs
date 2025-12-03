@@ -2037,3 +2037,55 @@ impl<T> Presence<Presence<T>> {
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// FromIterator trait implementation
+/////////////////////////////////////////////////////////////////////////////
+
+impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
+    /// Collects an iterator of `Presence<A>` into `Presence<V>`.
+    ///
+    /// Returns `Absent` if any element is `Absent`.
+    /// Returns `Null` if any element is `Null` (and none are `Absent`).
+    /// Returns `Some(collection)` only if all elements are `Some`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
+    /// let result: Presence<Vec<i32>> = v.into_iter().collect();
+    /// assert_eq!(result, Presence::Some(vec![1, 2, 3]));
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Null, Presence::Some(3)];
+    /// let result: Presence<Vec<i32>> = v.into_iter().collect();
+    /// assert_eq!(result, Presence::Null);
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Absent, Presence::Some(3)];
+    /// let result: Presence<Vec<i32>> = v.into_iter().collect();
+    /// assert_eq!(result, Presence::Absent);
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Absent, Presence::Null];
+    /// let result: Presence<Vec<i32>> = v.into_iter().collect();
+    /// assert_eq!(result, Presence::Absent);  // Absent takes precedence
+    /// ```
+    fn from_iter<I: IntoIterator<Item = Presence<A>>>(iter: I) -> Self {
+        let mut has_null = false;
+        let mut values = Vec::new();
+
+        for item in iter {
+            match item {
+                Presence::Absent => return Presence::Absent,
+                Presence::Null => has_null = true,
+                Presence::Some(value) => values.push(value),
+            }
+        }
+
+        if has_null {
+            Presence::Null
+        } else {
+            Presence::Some(values.into_iter().collect())
+        }
+    }
+}

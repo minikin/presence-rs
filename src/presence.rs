@@ -6,7 +6,7 @@
 /// Cardinality for bool: 2 (base) + 1 (optional) + 1 (nullable) = 4 states
 use std::{fmt, iter::FusedIterator};
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Presence<T> {
     /// Field/key is absent from the structure
     Absent,

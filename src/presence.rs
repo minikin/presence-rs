@@ -1988,3 +1988,52 @@ impl<T> Presence<&mut T> {
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// Trait implementations for Presence<Presence<T>>
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T> Presence<Presence<T>> {
+    /// Converts from `Presence<Presence<T>>` to `Presence<T>`.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<Presence<i32>> = Presence::Some(Presence::Some(6));
+    /// assert_eq!(Presence::Some(6), x.flatten());
+    ///
+    /// let x: Presence<Presence<i32>> = Presence::Some(Presence::Null);
+    /// assert_eq!(Presence::Null, x.flatten());
+    ///
+    /// let x: Presence<Presence<i32>> = Presence::Some(Presence::Absent);
+    /// assert_eq!(Presence::Absent, x.flatten());
+    ///
+    /// let x: Presence<Presence<i32>> = Presence::Null;
+    /// assert_eq!(Presence::Null, x.flatten());
+    ///
+    /// let x: Presence<Presence<i32>> = Presence::Absent;
+    /// assert_eq!(Presence::Absent, x.flatten());
+    /// ```
+    ///
+    /// Flattening multiple layers:
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<Presence<Presence<i32>>> = Presence::Some(Presence::Some(Presence::Some(6)));
+    /// assert_eq!(Presence::Some(Presence::Some(6)), x.flatten());
+    /// assert_eq!(Presence::Some(6), x.flatten().flatten());
+    /// ```
+    #[inline]
+    pub fn flatten(self) -> Presence<T> {
+        match self {
+            Presence::Some(inner) => inner,
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+}

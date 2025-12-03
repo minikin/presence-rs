@@ -2089,3 +2089,109 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// Product and Sum trait implementations
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T, U> std::iter::Product<Presence<U>> for Presence<T>
+where
+    T: std::iter::Product<U>,
+{
+    /// Computes the product of an iterator of `Presence<U>` values.
+    ///
+    /// Returns `Absent` if any element is `Absent`.
+    /// Returns `Null` if any element is `Null` (and none are `Absent`).
+    /// Returns `Some(product)` only if all elements are `Some`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let v = vec![Presence::Some(2), Presence::Some(3), Presence::Some(4)];
+    /// let result: Presence<i32> = v.into_iter().product();
+    /// assert_eq!(result, Presence::Some(24));
+    ///
+    /// let v = vec![Presence::Some(2), Presence::Null, Presence::Some(4)];
+    /// let result: Presence<i32> = v.into_iter().product();
+    /// assert_eq!(result, Presence::Null);
+    ///
+    /// let v = vec![Presence::Some(2), Presence::Absent, Presence::Some(4)];
+    /// let result: Presence<i32> = v.into_iter().product();
+    /// assert_eq!(result, Presence::Absent);
+    ///
+    /// let empty: Vec<Presence<i32>> = vec![];
+    /// let result: Presence<i32> = empty.into_iter().product();
+    /// assert_eq!(result, Presence::Some(1));  // Identity element for multiplication
+    /// ```
+    fn product<I: Iterator<Item = Presence<U>>>(iter: I) -> Self {
+        let mut has_null = false;
+        let mut values = Vec::new();
+
+        for item in iter {
+            match item {
+                Presence::Absent => return Presence::Absent,
+                Presence::Null => has_null = true,
+                Presence::Some(value) => values.push(value),
+            }
+        }
+
+        if has_null {
+            Presence::Null
+        } else {
+            Presence::Some(values.into_iter().product())
+        }
+    }
+}
+
+impl<T, U> std::iter::Sum<Presence<U>> for Presence<T>
+where
+    T: std::iter::Sum<U>,
+{
+    /// Computes the sum of an iterator of `Presence<U>` values.
+    ///
+    /// Returns `Absent` if any element is `Absent`.
+    /// Returns `Null` if any element is `Null` (and none are `Absent`).
+    /// Returns `Some(sum)` only if all elements are `Some`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
+    /// let result: Presence<i32> = v.into_iter().sum();
+    /// assert_eq!(result, Presence::Some(6));
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Null, Presence::Some(3)];
+    /// let result: Presence<i32> = v.into_iter().sum();
+    /// assert_eq!(result, Presence::Null);
+    ///
+    /// let v = vec![Presence::Some(1), Presence::Absent, Presence::Some(3)];
+    /// let result: Presence<i32> = v.into_iter().sum();
+    /// assert_eq!(result, Presence::Absent);
+    ///
+    /// let empty: Vec<Presence<i32>> = vec![];
+    /// let result: Presence<i32> = empty.into_iter().sum();
+    /// assert_eq!(result, Presence::Some(0));  // Identity element for addition
+    /// ```
+    fn sum<I: Iterator<Item = Presence<U>>>(iter: I) -> Self {
+        let mut has_null = false;
+        let mut values = Vec::new();
+
+        for item in iter {
+            match item {
+                Presence::Absent => return Presence::Absent,
+                Presence::Null => has_null = true,
+                Presence::Some(value) => values.push(value),
+            }
+        }
+
+        if has_null {
+            Presence::Null
+        } else {
+            Presence::Some(values.into_iter().sum())
+        }
+    }
+}

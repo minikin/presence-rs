@@ -2195,3 +2195,95 @@ where
         }
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// From trait implementations
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T> From<T> for Presence<T> {
+    /// Converts a value of type `T` into `Presence::Some(T)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = 42.into();
+    /// assert_eq!(x, Presence::Some(42));
+    ///
+    /// let s: Presence<String> = "hello".to_string().into();
+    /// assert_eq!(s, Presence::Some("hello".to_string()));
+    /// ```
+    #[inline]
+    fn from(value: T) -> Self {
+        Presence::Some(value)
+    }
+}
+
+impl<T> From<Option<Option<T>>> for Presence<T> {
+    /// Converts a nested `Option<Option<T>>` into `Presence<T>`.
+    ///
+    /// - `None` → `Absent`
+    /// - `Some(None)` → `Null`
+    /// - `Some(Some(v))` → `Some(v)`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Option<Option<i32>> = Some(Some(42));
+    /// let p: Presence<i32> = x.into();
+    /// assert_eq!(p, Presence::Some(42));
+    ///
+    /// let x: Option<Option<i32>> = Some(None);
+    /// let p: Presence<i32> = x.into();
+    /// assert_eq!(p, Presence::Null);
+    ///
+    /// let x: Option<Option<i32>> = None;
+    /// let p: Presence<i32> = x.into();
+    /// assert_eq!(p, Presence::Absent);
+    /// ```
+    #[inline]
+    fn from(opt: Option<Option<T>>) -> Self {
+        match opt {
+            None => Presence::Absent,
+            Some(None) => Presence::Null,
+            Some(Some(value)) => Presence::Some(value),
+        }
+    }
+}
+
+impl<T> From<Presence<T>> for Option<Option<T>> {
+    /// Converts a `Presence<T>` into a nested `Option<Option<T>>`.
+    ///
+    /// - `Absent` → `None`
+    /// - `Null` → `Some(None)`
+    /// - `Some(v)` → `Some(Some(v))`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let p = Presence::Some(42);
+    /// let opt: Option<Option<i32>> = p.into();
+    /// assert_eq!(opt, Some(Some(42)));
+    ///
+    /// let p: Presence<i32> = Presence::Null;
+    /// let opt: Option<Option<i32>> = p.into();
+    /// assert_eq!(opt, Some(None));
+    ///
+    /// let p: Presence<i32> = Presence::Absent;
+    /// let opt: Option<Option<i32>> = p.into();
+    /// assert_eq!(opt, None);
+    /// ```
+    #[inline]
+    fn from(presence: Presence<T>) -> Self {
+        match presence {
+            Presence::Absent => None,
+            Presence::Null => Some(None),
+            Presence::Some(value) => Some(Some(value)),
+        }
+    }
+}

@@ -93,6 +93,192 @@ impl<T> Presence<T> {
         matches!(self, Presence::Some(_))
     }
 
+    /////////////////////////////////////////////////////////////////////////
+    // IPLD-specific semantic methods
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Returns `true` if the field is defined (present in the structure).
+    ///
+    /// Returns `true` for [`Some`] or [`Null`] (field exists), `false` for [`Absent`] (field missing).
+    /// This follows IPLD schema semantics where a field can be present with a null value.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert!(x.is_defined());
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert!(y.is_defined());  // Null means field is present but null
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert!(!z.is_defined());  // Absent means field is not in structure
+    /// ```
+    #[inline]
+    pub const fn is_defined(&self) -> bool {
+        !matches!(self, Presence::Absent)
+    }
+
+    /// Returns `true` if the value is "nullish" (null-like).
+    ///
+    /// Returns `true` for [`Null`] or [`Absent`], `false` for [`Some`].
+    /// Useful for detecting any kind of "empty" or "missing" state.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert!(!x.is_nullish());
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert!(y.is_nullish());
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert!(z.is_nullish());
+    /// ```
+    #[inline]
+    pub const fn is_nullish(&self) -> bool {
+        !matches!(self, Presence::Some(_))
+    }
+
+    /// Converts to `Option<T>`, treating both [`Null`] and [`Absent`] as `None`.
+    ///
+    /// This is the "optional" representation where only concrete values matter.
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert_eq!(x.to_optional(), Some(42));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.to_optional(), None);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.to_optional(), None);
+    /// ```
+    #[inline]
+    pub fn to_optional(self) -> Option<T> {
+        match self {
+            Presence::Some(value) => Some(value),
+            Presence::Null | Presence::Absent => None,
+        }
+    }
+
+    /// Converts to `Option<Option<T>>`, preserving all three states.
+    ///
+    /// - [`Absent`] → `None`
+    /// - [`Null`] → `Some(None)`
+    /// - [`Some(v)`] → `Some(Some(v))`
+    ///
+    /// This is the "nullable" representation that preserves the distinction
+    /// between absent and explicitly null.
+    ///
+    /// [`Absent`]: Presence::Absent
+    /// [`Null`]: Presence::Null
+    /// [`Some(v)`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert_eq!(x.to_nullable(), Some(Some(42)));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.to_nullable(), Some(None));
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.to_nullable(), None);
+    /// ```
+    #[inline]
+    pub fn to_nullable(self) -> Option<Option<T>> {
+        match self {
+            Presence::Some(value) => Some(Some(value)),
+            Presence::Null => Some(None),
+            Presence::Absent => None,
+        }
+    }
+
+    /// Creates from `Option<T>`, treating `None` as [`Absent`].
+    ///
+    /// This is the "optional" representation where `None` means the field is absent.
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let opt = Some(42);
+    /// assert_eq!(Presence::from_optional(opt), Presence::Some(42));
+    ///
+    /// let opt: Option<i32> = None;
+    /// assert_eq!(Presence::from_optional(opt), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn from_optional(opt: Option<T>) -> Self {
+        match opt {
+            Some(value) => Presence::Some(value),
+            None => Presence::Absent,
+        }
+    }
+
+    /// Creates from `Option<Option<T>>`, preserving all three states.
+    ///
+    /// - `None` → [`Absent`]
+    /// - `Some(None)` → [`Null`]
+    /// - `Some(Some(v))` → [`Some(v)`]
+    ///
+    /// This is the "nullable" representation that distinguishes between
+    /// absent and explicitly null.
+    ///
+    /// [`Absent`]: Presence::Absent
+    /// [`Null`]: Presence::Null
+    /// [`Some(v)`]: Presence::Some
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let opt = Some(Some(42));
+    /// assert_eq!(Presence::from_nullable(opt), Presence::Some(42));
+    ///
+    /// let opt: Option<Option<i32>> = Some(None);
+    /// assert_eq!(Presence::from_nullable(opt), Presence::Null);
+    ///
+    /// let opt: Option<Option<i32>> = None;
+    /// assert_eq!(Presence::from_nullable(opt), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn from_nullable(opt: Option<Option<T>>) -> Self {
+        match opt {
+            Some(Some(value)) => Presence::Some(value),
+            Some(None) => Presence::Null,
+            None => Presence::Absent,
+        }
+    }
+
     /// Returns `true` if the presence is [`Some`] and the value inside of it matches a predicate.
     ///
     /// [`Some`]: Presence::Some

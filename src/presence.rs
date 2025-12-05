@@ -279,6 +279,80 @@ impl<T> Presence<T> {
         }
     }
 
+    /////////////////////////////////////////////////////////////////////////
+    // Cardinality-aware operations
+    /////////////////////////////////////////////////////////////////////////
+
+    /// Maps a `Presence<T>` to `Presence<U>` by applying a function to a contained value,
+    /// while preserving the distinction between [`Null`] and [`Absent`].
+    ///
+    /// Unlike [`map`], this method only transforms [`Some`] values and preserves
+    /// [`Null`] and [`Absent`] as-is, maintaining their semantic distinction.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`map`]: Presence::map
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(5);
+    /// assert_eq!(x.map_defined(|v| v * 2), Presence::Some(10));
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.map_defined(|v| v * 2), Presence::Null);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.map_defined(|v| v * 2), Presence::Absent);
+    /// ```
+    #[inline]
+    pub fn map_defined<U, F>(self, f: F) -> Presence<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Presence::Some(value) => Presence::Some(f(value)),
+            Presence::Null => Presence::Null,
+            Presence::Absent => Presence::Absent,
+        }
+    }
+
+    /// Returns the contained [`Some`] value or a provided default,
+    /// with different defaults for [`Null`] and [`Absent`].
+    ///
+    /// This is useful when you need to handle the two "empty" states differently,
+    /// such as in IPLD schemas where null and absent have distinct meanings.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// assert_eq!(x.unwrap_or_null_default(-1, -2), 42);
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!(y.unwrap_or_null_default(-1, -2), -2);  // null_default
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!(z.unwrap_or_null_default(-1, -2), -1);  // absent_default
+    /// ```
+    #[inline]
+    pub fn unwrap_or_null_default(self, absent_default: T, null_default: T) -> T {
+        match self {
+            Presence::Some(value) => value,
+            Presence::Null => null_default,
+            Presence::Absent => absent_default,
+        }
+    }
+
     /// Returns `true` if the presence is [`Some`] and the value inside of it matches a predicate.
     ///
     /// [`Some`]: Presence::Some

@@ -1,9 +1,174 @@
-/// Represents the presence/form of a value in schemas:
-/// - Absent: field not in serialized data  {}
-/// - Null:   field present but null       {"field": null}
-/// - Some:   field present with value     {"field": value}
-///
-/// Cardinality for bool: 2 (base) + 1 (optional) + 1 (nullable) = 4 states
+//! Three-valued presence semantics for optional and nullable fields.
+//!
+//! This module provides the [`Presence<T>`] type, a three-valued alternative to Rust's
+//! two-valued [`Option<T>`]. Where `Option` distinguishes between "some value" and "no value",
+//! `Presence` adds a third state to distinguish between "field not present" and "field
+//! present but null". This is particularly useful for:
+//!
+//! - JSON/IPLD schema validation where `{}`, `{"field": null}`, and `{"field": value}` are distinct
+//! - API responses where missing fields have different semantics than explicit nulls
+//! - Database operations where NULL and absence have different meanings
+//! - Form data where unchecked boxes differ from explicitly set null values
+//!
+//! # Three States
+//!
+//! [`Presence<T>`] has three variants:
+//!
+//! - [`Absent`]: The field/key is not present in the data structure
+//!   - JSON: `{}` (field omitted)
+//!   - Semantics: Field was never set, doesn't exist in the structure
+//!
+//! - [`Null`]: The field/key is present but the value is explicitly null
+//!   - JSON: `{"field": null}`
+//!   - Semantics: Field exists but was explicitly set to null
+//!
+//! - [`Some(T)`]: The field/key is present with a concrete value
+//!   - JSON: `{"field": value}`
+//!   - Semantics: Field exists with a meaningful value
+//!
+//! [`Absent`]: Presence::Absent
+//! [`Null`]: Presence::Null
+//! [`Some(T)`]: Presence::Some
+//!
+//! # Comparison with Option
+//!
+//! While [`Option<Option<T>>`] can represent three states, [`Presence<T>`] provides:
+//!
+//! - **Clearer semantics**: Named variants instead of nested Options
+//! - **Better ergonomics**: Single-level matching instead of nested patterns
+//! - **Rich API**: Methods designed for three-valued logic
+//! - **IPLD compatibility**: Direct support for IPLD schema semantics
+//!
+//! # Examples
+//!
+//! ## Basic Usage
+//!
+//! ```
+//! use presence_rs::presence::Presence;
+//!
+//! // Creating Presence values
+//! let present = Presence::Some(42);
+//! let null = Presence::<i32>::Null;
+//! let absent = Presence::<i32>::Absent;
+//!
+//! // Pattern matching
+//! match present {
+//!     Presence::Some(value) => println!("Got value: {}", value),
+//!     Presence::Null => println!("Explicitly null"),
+//!     Presence::Absent => println!("Not present"),
+//! }
+//!
+//! // Using query methods
+//! assert!(present.is_present());
+//! assert!(null.is_defined());      // Null is "defined" (exists in structure)
+//! assert!(!absent.is_defined());   // Absent is not defined
+//! assert!(null.is_nullish());      // Both Null and Absent are "nullish"
+//! ```
+//!
+//! ## Functional Transformations
+//!
+//! ```
+//! use presence_rs::presence::Presence;
+//!
+//! let x = Presence::Some(5);
+//!
+//! // Map transforms Some, converts Null/Absent to Absent
+//! assert_eq!(x.map(|v| v * 2), Presence::Some(10));
+//!
+//! // map_defined preserves Null vs Absent distinction
+//! let null: Presence<i32> = Presence::Null;
+//! assert_eq!(null.map_defined(|v| v * 2), Presence::Null);
+//!
+//! // Chaining operations
+//! let result = Presence::Some(5)
+//!     .map(|x| x * 2)
+//!     .filter(|x| x > &5)
+//!     .unwrap_or(0);
+//! assert_eq!(result, 10);
+//! ```
+//!
+//! ## Conversions
+//!
+//! ```
+//! use presence_rs::presence::Presence;
+//!
+//! // From Option<Option<T>> (nullable representation)
+//! let nested: Option<Option<i32>> = Some(None);
+//! let presence: Presence<i32> = nested.into();
+//! assert_eq!(presence, Presence::Null);
+//!
+//! // To Option<Option<T>>
+//! let back: Option<Option<i32>> = presence.into();
+//! assert_eq!(back, Some(None));
+//!
+//! // From/to Option<T> (optional representation)
+//! let opt = Some(42);
+//! let p = Presence::from_optional(opt);
+//! assert_eq!(p, Presence::Some(42));
+//!
+//! let opt2 = p.to_optional();
+//! assert_eq!(opt2, Some(42));
+//! ```
+//!
+//! ## Working with Collections
+//!
+//! ```
+//! use presence_rs::presence::Presence;
+//!
+//! // Collecting - short-circuits on Absent or Null
+//! let values = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
+//! let result: Presence<Vec<i32>> = values.into_iter().collect();
+//! assert_eq!(result, Presence::Some(vec![1, 2, 3]));
+//!
+//! let with_null = vec![Presence::Some(1), Presence::Null, Presence::Some(3)];
+//! let result: Presence<Vec<i32>> = with_null.into_iter().collect();
+//! assert_eq!(result, Presence::Null);
+//!
+//! // Sum and Product
+//! let nums = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
+//! let sum: Presence<i32> = nums.into_iter().sum();
+//! assert_eq!(sum, Presence::Some(6));
+//! ```
+//!
+//! ## IPLD Schema Semantics
+//!
+//! ```
+//! use presence_rs::presence::Presence;
+//!
+//! // Check if field is defined (exists in structure)
+//! let null: Presence<i32> = Presence::Null;
+//! assert!(null.is_defined());  // true - field exists even though null
+//!
+//! let absent: Presence<i32> = Presence::Absent;
+//! assert!(!absent.is_defined());  // false - field doesn't exist
+//!
+//! // Different defaults for null vs absent
+//! assert_eq!(null.unwrap_or_null_default(1, 2), 2);    // null_default
+//! assert_eq!(absent.unwrap_or_null_default(1, 2), 1);  // absent_default
+//! ```
+//!
+//! # Cardinality
+//!
+//! For a base type with `N` possible values, `Presence<T>` provides `N + 2` states:
+//!
+//! - `N` states from `Some(value)` where value has type `T`
+//! - `1` state from `Null` (explicitly null)
+//! - `1` state from `Absent` (not present)
+//!
+//! For example, `Presence<bool>` has 4 states: `Some(true)`, `Some(false)`, `Null`, `Absent`.
+//!
+//! # API Organization
+//!
+//! The API is organized into several categories:
+//!
+//! - **Querying**: `is_absent()`, `is_null()`, `is_present()`, `is_defined()`, `is_nullish()`
+//! - **Extracting**: `expect()`, `unwrap()`, `unwrap_or()`, `unwrap_or_default()`
+//! - **Transforming**: `map()`, `map_defined()`, `filter()`, `and_then()`, `flatten()`
+//! - **Combining**: `and()`, `or()`, `xor()`, `zip()`, `zip_with()`
+//! - **Converting**: `to_optional()`, `to_nullable()`, `from_optional()`, `from_nullable()`
+//! - **References**: `as_ref()`, `as_mut()`, `as_deref()`, `copied()`, `cloned()`
+//! - **Iterating**: `iter()`, `iter_mut()`, `into_iter()`
+
 use std::{fmt, iter::FusedIterator};
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]

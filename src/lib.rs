@@ -40,3 +40,50 @@
 //! [`Presence<T>`]: presence::Presence
 
 pub mod presence;
+
+/// Convenience macro for creating [`Presence`] values.
+///
+/// This macro provides a concise syntax for constructing `Presence` values,
+/// similar to how `vec![]` works for `Vec`.
+///
+/// [`Presence`]: presence::Presence
+///
+/// # Syntax
+///
+/// - `presence!()` - Creates `Presence::Absent`
+/// - `presence!(null)` - Creates `Presence::Null`
+/// - `presence!(value)` - Creates `Presence::Some(value)`
+///
+/// # Examples
+///
+/// ```
+/// use presence_rs::presence;
+///
+/// let absent: presence::Presence<i32> = presence!();
+/// assert_eq!(absent, presence::Presence::Absent);
+///
+/// let null: presence::Presence<i32> = presence!(null);
+/// assert_eq!(null, presence::Presence::Null);
+///
+/// let some = presence!(42);
+/// assert_eq!(some, presence::Presence::Some(42));
+///
+/// // Works with any expression
+/// let computed = presence!(2 + 2);
+/// assert_eq!(computed, presence::Presence::Some(4));
+///
+/// let owned = presence!("hello".to_string());
+/// assert_eq!(owned, presence::Presence::Some("hello".to_string()));
+/// ```
+#[macro_export]
+macro_rules! presence {
+    () => {
+        $crate::presence::Presence::Absent
+    };
+    (null) => {
+        $crate::presence::Presence::Null
+    };
+    ($value:expr) => {
+        $crate::presence::Presence::Some($value)
+    };
+}

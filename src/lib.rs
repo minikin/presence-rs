@@ -41,6 +41,9 @@
 
 pub mod presence;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 /// Convenience macro for creating [`Presence`] values.
 ///
 /// This macro provides a concise syntax for constructing `Presence` values,

@@ -35,7 +35,7 @@
 //! assert_eq!(null.map_defined(|x| x * 2), Presence::Null);
 //! ```
 //!
-//! See the [`presence`] module for detailed documentation and examples.
+//! See the [`mod@presence`] module for detailed documentation and examples.
 //!
 //! [`Presence<T>`]: presence::Presence
 

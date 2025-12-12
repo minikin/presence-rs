@@ -16,10 +16,6 @@
   - [Examples](#examples)
     - [Basic Usage](#basic-usage)
     - [Practical Example: API Update Request](#practical-example-api-update-request)
-  - [Features](#features)
-  - [API](#api)
-    - [Querying Methods](#querying-methods)
-    - [Conversion Methods](#conversion-methods)
   - [Use Cases](#use-cases)
   - [License](#license)
   - [Contributing](#contributing)
@@ -149,31 +145,6 @@ let update = UserUpdate {
 apply_update("Alice".to_string(), update);
 // Output: "Name unchanged: Alice"
 ```
-
-## Features
-
-- **Type-safe** tri-state representation
-- **Iterator traits**: `IntoIterator`, `Iterator`, `DoubleEndedIterator`,
-`ExactSizeIterator`, `FusedIterator`
-- **Default trait**: Defaults to `Absent`
-- **Display trait**: Human-readable output
-- **Conversion to nested `Option<Option<T>>`** for compatibility with existing code
-- **Const methods** for compile-time evaluation where possible
-
-## API
-
-### Querying Methods
-
-- `is_absent(&self) -> bool`: Returns true if the field is absent
-- `is_null(&self) -> bool`: Returns true if the value is null
-- `is_present(&self) -> bool`: Returns true if a concrete value is present
-
-### Conversion Methods
-
-- `as_ref(&self) -> Presence<&T>`: Converts from `&Presence<T>` to `Presence<&T>`
-- `as_mut(&mut self) -> Presence<&mut T>`: Converts from `&mut Presence<T>` to `Presence<&mut T>`
-- `to_nested_option(self) -> Option<Option<T>>`: Converts to nested Option for interop
-
 ## Use Cases
 
 This type is particularly useful in:

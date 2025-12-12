@@ -148,7 +148,7 @@ fn test_presence_macro_in_struct() {
 
 #[test]
 fn test_presence_macro_in_vec() {
-    let v = vec![presence!(1), presence!(2), presence!(null), presence!()];
+    let v = [presence!(1), presence!(2), presence!(null), presence!()];
     assert_eq!(v[0], Presence::Some(1));
     assert_eq!(v[1], Presence::Some(2));
     assert_eq!(v[2], Presence::Null);

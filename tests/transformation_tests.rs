@@ -51,8 +51,8 @@ fn test_map_or_else() {
 #[test]
 fn test_and() {
     let some = Presence::Some(5);
-    assert_eq!(some.clone().and(Presence::Some(10)), Presence::Some(10));
-    assert_eq!(some.clone().and(Presence::<i32>::Null), Presence::Null);
+    assert_eq!(some.and(Presence::Some(10)), Presence::Some(10));
+    assert_eq!(some.and(Presence::<i32>::Null), Presence::Null);
     assert_eq!(some.and(Presence::<i32>::Absent), Presence::Absent);
 
     let null: Presence<i32> = Presence::Null;
@@ -66,10 +66,7 @@ fn test_and() {
 fn test_and_then() {
     let some = Presence::Some(5);
     assert_eq!(some.and_then(|x| Presence::Some(x * 2)), Presence::Some(10));
-    assert_eq!(
-        some.and_then(|_| Presence::<i32>::Null),
-        Presence::Null
-    );
+    assert_eq!(some.and_then(|_| Presence::<i32>::Null), Presence::Null);
 
     let null: Presence<i32> = Presence::Null;
     assert_eq!(null.and_then(|x| Presence::Some(x * 2)), Presence::Null);
@@ -81,7 +78,7 @@ fn test_and_then() {
 #[test]
 fn test_filter() {
     let some = Presence::Some(5);
-    assert_eq!(some.clone().filter(|&x| x > 3), Presence::Some(5));
+    assert_eq!(some.filter(|&x| x > 3), Presence::Some(5));
     assert_eq!(some.filter(|&x| x > 10), Presence::Absent);
 
     let null: Presence<i32> = Presence::Null;
@@ -123,9 +120,9 @@ fn test_xor() {
     let null: Presence<i32> = Presence::Null;
     let absent: Presence<i32> = Presence::Absent;
 
-    assert_eq!(some1.clone().xor(some2), Presence::Absent);
-    assert_eq!(some1.clone().xor(null.clone()), Presence::Some(5));
-    assert_eq!(some1.xor(absent.clone()), Presence::Some(5));
+    assert_eq!(some1.xor(some2), Presence::Absent);
+    assert_eq!(some1.xor(null), Presence::Some(5));
+    assert_eq!(some1.xor(absent), Presence::Some(5));
     assert_eq!(null.xor(absent), Presence::Absent);
 }
 

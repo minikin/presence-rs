@@ -694,9 +694,7 @@ impl<T> Presence<T> {
     #[inline]
     pub const fn as_pin_ref(self: std::pin::Pin<&Self>) -> Presence<std::pin::Pin<&T>> {
         match std::pin::Pin::get_ref(self) {
-            Presence::Some(val) => unsafe {
-                Presence::Some(std::pin::Pin::new_unchecked(val))
-            },
+            Presence::Some(val) => unsafe { Presence::Some(std::pin::Pin::new_unchecked(val)) },
             Presence::Null => Presence::Null,
             Presence::Absent => Presence::Absent,
         }
@@ -1351,6 +1349,30 @@ impl<T> Presence<T> {
             Presence::Some(_) => 1,
             Presence::Null | Presence::Absent => 0,
         }
+    }
+
+    /// Returns `true` if the presence contains no value (is [`Null`] or [`Absent`]).
+    ///
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::presence::Presence;
+    ///
+    /// let x: Presence<i32> = Presence::Some(42);
+    /// assert!(!x.is_empty());
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert!(y.is_empty());
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert!(z.is_empty());
+    /// ```
+    #[inline]
+    pub const fn is_empty(&self) -> bool {
+        matches!(self, Presence::Null | Presence::Absent)
     }
 
     /////////////////////////////////////////////////////////////////////////

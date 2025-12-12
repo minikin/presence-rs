@@ -131,7 +131,7 @@ fn test_as_mut_slice() {
 fn test_round_trip_conversions() {
     // Test that converting back and forth preserves state
     let original = Presence::Some(42);
-    let nullable = original.clone().to_nullable();
+    let nullable = original.to_nullable();
     let back = Presence::from_nullable(nullable);
     assert_eq!(original, back);
 

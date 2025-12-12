@@ -3,7 +3,7 @@ use presence_rs::presence::Presence;
 #[test]
 fn test_is_some_and() {
     let some = Presence::Some(5);
-    assert!(some.clone().is_some_and(|x| x > 3));
+    assert!(some.is_some_and(|x| x > 3));
     assert!(!some.is_some_and(|x| x > 10));
 
     let null: Presence<i32> = Presence::Null;
@@ -17,7 +17,7 @@ fn test_is_some_and() {
 fn test_is_absent_or() {
     let some = Presence::Some(5);
     // Returns true if Some(val) AND predicate matches
-    assert!(some.clone().is_absent_or(|x| x > 3));
+    assert!(some.is_absent_or(|x| x > 3));
     assert!(!some.is_absent_or(|x| x > 10));
 
     let null: Presence<i32> = Presence::Null;
@@ -33,7 +33,7 @@ fn test_is_absent_or() {
 fn test_is_null_or() {
     let some = Presence::Some(5);
     // Returns true if Some(val) AND predicate matches
-    assert!(some.clone().is_null_or(|x| x > 3));
+    assert!(some.is_null_or(|x| x > 3));
     assert!(!some.is_null_or(|x| x > 10));
 
     let null: Presence<i32> = Presence::Null;

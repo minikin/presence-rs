@@ -189,4 +189,4 @@ Releases are managed by maintainers:
 
 ## License
 
-By contributing, you agree that your contributions will be dual-licensed under MIT OR Apache-2.0, matching the project's license.
+This project is licensed under the MIT License - see the LICENSE file for details.

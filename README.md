@@ -17,8 +17,8 @@
     - [Basic Usage](#basic-usage)
     - [Practical Example: API Update Request](#practical-example-api-update-request)
   - [Use Cases](#use-cases)
-  - [License](#license)
   - [Contributing](#contributing)
+  - [License](#license)
 
 ## Overview
 
@@ -157,10 +157,10 @@ being sent vs. being explicitly set to null
 - **Database operations** where you need to differentiate between "not provided"
 and "set to NULL"
 
-## License
-
-This project is dual-licensed under MIT OR Apache-2.0.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

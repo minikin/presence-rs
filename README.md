@@ -1,6 +1,6 @@
 # Presence
 
-[![CI](https://github.com/minikin/presence-rs/workflows/CI/badge.svg)](https://github.com/mnkn/presence-rs/actions?query=workflow%3ACI)
+[![CI](https://github.com/minikin/presence-rs/workflows/CI/badge.svg)](https://github.com/minikin/presence-rs/actions?query=workflow%3ACI)
 [![crates.io](https://img.shields.io/crates/v/presence-rs.svg)](https://crates.io/crates/presence-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 

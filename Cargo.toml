@@ -2,6 +2,14 @@
 name = "presence-rs"
 version = "0.1.0"
 edition = "2024"
+authors = ["Oleksandr Prokhorenko <warbles.lieu_04@icloud.com>"]
+description = "A Rust library providing a tri-state type for representing value presence in schemas and data structures."
+license = "MIT"
+repository = "https://github.com/mnkn/presence-rs"
+homepage = "https://github.com/mnkn/presence-rs"
+keywords = ["nullable", "option", "undefined", "tri-state", "schema"]
+categories = ["data-structures", "encoding", "rust-patterns"]
+readme = "README.md"
 
 [dependencies]
 serde = { version = "1.0", optional = true, features = ["derive"] }

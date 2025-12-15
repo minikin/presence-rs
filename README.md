@@ -7,6 +7,10 @@
 > A Rust library providing a tri-state type for representing value presence
 > in schemas and data structures.
 
+> [!TIP]
+> If you what to read more about the motivation behind this crate, check out
+> [Stop Losing Intent: Absent, Null, and Value in Rust](https://minikin.me/blog/presence-rs)
+
 - [Presence](#presence)
   - [Overview](#overview)
   - [Cardinality](#cardinality)

@@ -85,7 +85,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-presence-rs = "0.1.0"
+presence-rs = "0.1.1"
 ```
 
 ## Examples

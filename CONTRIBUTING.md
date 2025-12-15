@@ -1,6 +1,7 @@
 # Contributing to Presence-RS
 
-Thank you for your interest in contributing to Presence-RS! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Presence-RS!
+This document provides guidelines and instructions for contributing.
 
 - [Contributing to Presence-RS](#contributing-to-presence-rs)
   - [Development Setup](#development-setup)

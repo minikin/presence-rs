@@ -27,18 +27,13 @@ Thank you for your interest in contributing to Presence-RS! This document provid
 
 **Note:** This project uses Rust edition 2024.
 
-1. Install Rust via [rustup](https://rustup.rs/)
-2. Install and use nightly Rust (required for edition 2024):
-   ```bash
-   rustup install nightly
-   rustup default nightly
    ```
-3. Clone the repository:
+1. Clone the repository:
    ```bash
    git clone https://github.com/mnkn/presence-rs.git
    cd presence-rs
    ```
-4. Install development dependencies:
+2. Install development dependencies:
    ```bash
    rustup component add rustfmt clippy
    ```

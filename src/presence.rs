@@ -72,12 +72,11 @@
 //!
 //! let x = Presence::Some(5);
 //!
-//! // Map transforms Some, converts Null/Absent to Absent
+//! // Map transforms Some, preserves Null and Absent
 //! assert_eq!(x.map(|v| v * 2), Presence::Some(10));
 //!
-//! // map_defined preserves Null vs Absent distinction
 //! let null: Presence<i32> = Presence::Null;
-//! assert_eq!(null.map_defined(|v| v * 2), Presence::Null);
+//! assert_eq!(null.map(|v| v * 2), Presence::Null);
 //!
 //! // Chaining operations
 //! let result = Presence::Some(5)
@@ -163,7 +162,7 @@
 //!
 //! - **Querying**: `is_absent()`, `is_null()`, `is_present()`, `is_defined()`, `is_nullish()`
 //! - **Extracting**: `expect()`, `unwrap()`, `unwrap_or()`, `unwrap_or_default()`
-//! - **Transforming**: `map()`, `map_defined()`, `filter()`, `and_then()`, `flatten()`
+//! - **Transforming**: `map()`, `filter()`, `and_then()`, `flatten()`
 //! - **Combining**: `and()`, `or()`, `xor()`, `zip()`, `zip_with()`
 //! - **Converting**: `to_optional()`, `to_nullable()`, `from_optional()`, `from_nullable()`
 //! - **References**: `as_ref()`, `as_mut()`, `as_deref()`, `copied()`, `cloned()`
@@ -447,43 +446,6 @@ impl<T> Presence<T> {
     /////////////////////////////////////////////////////////////////////////
     // Cardinality-aware operations
     /////////////////////////////////////////////////////////////////////////
-
-    /// Maps a `Presence<T>` to `Presence<U>` by applying a function to a contained value,
-    /// while preserving the distinction between [`Null`] and [`Absent`].
-    ///
-    /// Unlike [`map`], this method only transforms [`Some`] values and preserves
-    /// [`Null`] and [`Absent`] as-is, maintaining their semantic distinction.
-    ///
-    /// [`Some`]: Presence::Some
-    /// [`Null`]: Presence::Null
-    /// [`Absent`]: Presence::Absent
-    /// [`map`]: Presence::map
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use presence_rs::presence::Presence;
-    ///
-    /// let x = Presence::Some(5);
-    /// assert_eq!(x.map_defined(|v| v * 2), Presence::Some(10));
-    ///
-    /// let y: Presence<i32> = Presence::Null;
-    /// assert_eq!(y.map_defined(|v| v * 2), Presence::Null);
-    ///
-    /// let z: Presence<i32> = Presence::Absent;
-    /// assert_eq!(z.map_defined(|v| v * 2), Presence::Absent);
-    /// ```
-    #[inline]
-    pub fn map_defined<U, F>(self, f: F) -> Presence<U>
-    where
-        F: FnOnce(T) -> U,
-    {
-        match self {
-            Presence::Some(value) => Presence::Some(f(value)),
-            Presence::Null => Presence::Null,
-            Presence::Absent => Presence::Absent,
-        }
-    }
 
     /// Returns the contained [`Some`] value or a provided default,
     /// with different defaults for [`Null`] and [`Absent`].

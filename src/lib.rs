@@ -32,7 +32,7 @@
 //! assert!(!absent.is_defined());   // Doesn't exist in structure
 //!
 //! // Transformations preserve null vs absent
-//! assert_eq!(null.map_defined(|x| x * 2), Presence::Null);
+//! assert_eq!(null.map(|x| x * 2), Presence::Null);
 //! ```
 //!
 //! See the [`mod@presence`] module for detailed documentation and examples.

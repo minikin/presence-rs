@@ -13,18 +13,6 @@ fn test_map() {
 }
 
 #[test]
-fn test_map_defined() {
-    let some = Presence::Some(5);
-    assert_eq!(some.map_defined(|x| x * 2), Presence::Some(10));
-
-    let null: Presence<i32> = Presence::Null;
-    assert_eq!(null.map_defined(|x| x * 2), Presence::Null);
-
-    let absent: Presence<i32> = Presence::Absent;
-    assert_eq!(absent.map_defined(|x| x * 2), Presence::Absent);
-}
-
-#[test]
 fn test_map_or() {
     let some = Presence::Some(5);
     assert_eq!(some.map_or(42, |x| x * 2), 10);

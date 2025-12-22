@@ -172,9 +172,8 @@ Releases are managed by maintainers:
 
 ## Getting Help
 
-- Open an issue for bugs or feature requests
-- Start a discussion for questions or ideas
-- Review existing issues before creating new ones
+- **Found a bug or have a feature request?** Please submit a Pull Request directly. The Issues tab is not available on this repository as we don't have the capacity to manage incoming issues at this time.
+- For questions or ideas, feel free to open a PR with your proposed changes or improvements.
 
 ## Code of Conduct
 

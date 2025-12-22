@@ -31,7 +31,7 @@ This document provides guidelines and instructions for contributing.
    ```
 1. Clone the repository:
    ```bash
-   git clone https://github.com/mnkn/presence-rs.git
+   git clone https://github.com/minikin/presence-rs.git
    cd presence-rs
    ```
 2. Install development dependencies:
@@ -172,7 +172,8 @@ Releases are managed by maintainers:
 
 ## Getting Help
 
-- **Found a bug or have a feature request?** Please submit a Pull Request directly. The Issues tab is not available on this repository as we don't have the capacity to manage incoming issues at this time.
+- **Found a bug or have a feature request?** Please submit a Pull Request directly.
+The Issues tab is not available on this repository as we don't have the capacity to manage incoming issues at this time.
 - For questions or ideas, feel free to open a PR with your proposed changes or improvements.
 
 ## Code of Conduct

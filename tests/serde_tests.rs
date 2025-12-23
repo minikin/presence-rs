@@ -1,6 +1,6 @@
 #![cfg(feature = "serde")]
 
-use presence_rs::presence::Presence;
+use presence_rs::Presence;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

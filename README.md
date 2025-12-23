@@ -93,7 +93,7 @@ presence-rs = "0.1.2"
 ### Basic Usage
 
 ```rust
-use presence_rs::presence::Presence;
+use presence_rs::Presence;
 
 // Create Presence values
 let absent: Presence<i32> = Presence::Absent;
@@ -109,7 +109,7 @@ assert!(some.is_present());
 ### Practical Example: API Update Request
 
 ```rust
-use presence_rs::presence::Presence;
+use presence_rs::Presence;
 
 #[derive(Debug)]
 struct UserUpdate {

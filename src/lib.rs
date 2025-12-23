@@ -21,7 +21,7 @@
 //! # Quick Example
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! let present = Presence::Some(42);
 //! let null = Presence::<i32>::Null;
@@ -40,6 +40,7 @@
 //! [`Presence<T>`]: presence::Presence
 
 pub mod presence;
+pub use presence::Presence;
 
 #[cfg(feature = "serde")]
 mod serde;

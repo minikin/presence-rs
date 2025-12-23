@@ -44,7 +44,7 @@
 //! ## Basic Usage
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! // Creating Presence values
 //! let present = Presence::Some(42);
@@ -68,7 +68,7 @@
 //! ## Functional Transformations
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! let x = Presence::Some(5);
 //!
@@ -89,7 +89,7 @@
 //! ## Conversions
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! // From Option<Option<T>> (nullable representation)
 //! let nested: Option<Option<i32>> = Some(None);
@@ -112,7 +112,7 @@
 //! ## Working with Collections
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! // Collecting - short-circuits on Absent or Null
 //! let values = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
@@ -132,7 +132,7 @@
 //! ## IPLD Schema Semantics
 //!
 //! ```
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! // Check if field is defined (exists in structure)
 //! let null: Presence<i32> = Presence::Null;
@@ -195,7 +195,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Absent;
     /// assert!(x.is_absent());
@@ -218,7 +218,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Null;
     /// assert!(x.is_null());
@@ -241,7 +241,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Some(42);
     /// assert!(x.is_present());
@@ -273,7 +273,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert!(x.is_defined());
@@ -301,7 +301,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert!(!x.is_nullish());
@@ -327,7 +327,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert_eq!(x.to_optional(), Some(42));
@@ -362,7 +362,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert_eq!(x.to_nullable(), Some(Some(42)));
@@ -391,7 +391,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let opt = Some(42);
     /// assert_eq!(Presence::from_optional(opt), Presence::Some(42));
@@ -423,7 +423,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let opt = Some(Some(42));
     /// assert_eq!(Presence::from_nullable(opt), Presence::Some(42));
@@ -460,7 +460,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert_eq!(x.unwrap_or_null_default(-1, -2), 42);
@@ -487,7 +487,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<u32> = Presence::Some(2);
     /// assert_eq!(x.is_some_and(|x| x > 1), true);
@@ -516,7 +516,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<u32> = Presence::Some(2);
     /// assert_eq!(x.is_absent_or(|x| x > 1), true);
@@ -547,7 +547,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<u32> = Presence::Some(2);
     /// assert_eq!(x.is_null_or(|x| x > 1), true);
@@ -577,7 +577,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert_eq!(x.as_ref(), Presence::Some(&42));
@@ -605,7 +605,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(42);
     /// match x.as_mut() {
@@ -637,7 +637,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     /// use std::pin::Pin;
     ///
     /// let x = Presence::Some(42);
@@ -670,7 +670,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     /// use std::pin::Pin;
     ///
     /// let mut x = Presence::Some(42);
@@ -713,7 +713,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// assert_eq!(x.as_slice(), &[42]);
@@ -743,7 +743,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(42);
     /// let slice = x.as_mut_slice();
@@ -776,7 +776,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<String> = Presence::Some("hello".to_string());
     /// assert_eq!(x.as_deref(), Presence::Some("hello"));
@@ -809,7 +809,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x: Presence<String> = Presence::Some("hello".to_string());
     /// match x.as_deref_mut() {
@@ -844,7 +844,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Some(42);
     /// assert_eq!(x.to_nested_option(), Some(Some(42)));
@@ -881,21 +881,21 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("value");
     /// assert_eq!(x.expect("should have a value"), "value");
     /// ```
     ///
     /// ```should_panic
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<&str> = Presence::Null;
     /// x.expect("the value was null"); // panics with `the value was null`
     /// ```
     ///
     /// ```should_panic
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<&str> = Presence::Absent;
     /// x.expect("the value was absent"); // panics with `the value was absent`
@@ -931,21 +931,21 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("air");
     /// assert_eq!(x.unwrap(), "air");
     /// ```
     ///
     /// ```should_panic
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<&str> = Presence::Null;
     /// x.unwrap(); // panics
     /// ```
     ///
     /// ```should_panic
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<&str> = Presence::Absent;
     /// x.unwrap(); // panics
@@ -972,7 +972,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("value");
     /// assert_eq!(x.unwrap_or("default"), "value");
@@ -998,7 +998,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(2);
     /// assert_eq!(x.unwrap_or_else(|| 10), 2);
@@ -1034,7 +1034,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Some(42);
     /// assert_eq!(x.unwrap_or_default(), 42);
@@ -1063,7 +1063,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(42);
     /// let y = x.take();
@@ -1090,7 +1090,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(42);
     /// let old = x.take_if(|v| *v == 42);
@@ -1126,7 +1126,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(2);
     /// let old = x.replace(5);
@@ -1161,7 +1161,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut opt = Presence::Null;
     /// let val = opt.insert(1);
@@ -1196,7 +1196,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Null;
     ///
@@ -1230,7 +1230,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x: Presence<u32> = Presence::Null;
     /// let y: &mut u32 = x.get_or_insert_default();
@@ -1258,7 +1258,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Null;
     /// let y: &mut u32 = x.get_or_insert_with(|| 5);
@@ -1294,7 +1294,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Some(42);
     /// assert_eq!(x.len(), 1);
@@ -1321,7 +1321,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Presence::Some(42);
     /// assert!(!x.is_empty());
@@ -1351,7 +1351,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("hello");
     /// assert_eq!(x.map(|s| s.len()), Presence::Some(5));
@@ -1383,7 +1383,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(4)
     ///     .inspect(|x| println!("got: {}", x))
@@ -1424,7 +1424,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("foo");
     /// assert_eq!(x.map_or(42, |v| v.len()), 3);
@@ -1456,7 +1456,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("foo");
     /// assert_eq!(x.map_or_else(|| 42, |v| v.len()), 3);
@@ -1488,7 +1488,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("foo");
     /// assert_eq!(x.map_or_default(|v| v.len()), 3);
@@ -1532,7 +1532,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("foo");
     /// assert_eq!(x.ok_or(0), Ok("foo"));
@@ -1563,7 +1563,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some("foo");
     /// assert_eq!(x.ok_or_else(|| 0), Ok("foo"));
@@ -1598,7 +1598,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(2);
     /// let y: Presence<&str> = Presence::Null;
@@ -1637,7 +1637,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// fn sq_then_to_string(x: u32) -> Presence<String> {
     ///     Presence::Some((x * x).to_string())
@@ -1669,7 +1669,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// fn is_even(n: &i32) -> bool {
     ///     n % 2 == 0
@@ -1704,7 +1704,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(2);
     /// let y = Presence::Null;
@@ -1740,7 +1740,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// fn nobody() -> Presence<&'static str> { Presence::Null }
     /// fn vikings() -> Presence<&'static str> { Presence::Some("vikings") }
@@ -1770,7 +1770,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(2);
     /// let y: Presence<i32> = Presence::Null;
@@ -1815,7 +1815,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(1);
     /// let y = Presence::Some("hi");
@@ -1849,7 +1849,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// #[derive(Debug, PartialEq)]
     /// struct Point {
@@ -1896,7 +1896,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(5);
     /// let y = Presence::Some(10);
@@ -1925,7 +1925,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some((1, "hi"));
     /// let y: Presence<(i32, &str)> = Presence::Null;
@@ -1963,7 +1963,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// let mut iter = x.iter();
@@ -1996,7 +1996,7 @@ impl<T> Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = Presence::Some(42);
     /// for v in x.iter_mut() {
@@ -2046,7 +2046,7 @@ impl<T> Default for Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = Default::default();
     /// assert_eq!(x, Presence::Absent);
@@ -2070,7 +2070,7 @@ impl<T> IntoIterator for Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = Presence::Some(42);
     /// let v: Vec<_> = x.into_iter().collect();
@@ -2104,7 +2104,7 @@ impl<T> IntoIterator for Presence<T> {
 /// # Examples
 ///
 /// ```
-/// use presence_rs::presence::Presence;
+/// use presence_rs::Presence;
 ///
 /// let x = Presence::Some(42);
 /// let mut iter = x.into_iter();
@@ -2163,7 +2163,7 @@ impl<A> FusedIterator for Item<A> {}
 /// # Examples
 ///
 /// ```
-/// use presence_rs::presence::Presence;
+/// use presence_rs::Presence;
 ///
 /// let x = Presence::Some(42);
 /// let mut iter = x.iter();
@@ -2215,7 +2215,7 @@ impl<A> FusedIterator for Iter<'_, A> {}
 /// # Examples
 ///
 /// ```
-/// use presence_rs::presence::Presence;
+/// use presence_rs::Presence;
 ///
 /// let mut x = Presence::Some(42);
 /// for v in x.iter_mut() {
@@ -2269,7 +2269,7 @@ impl<T> Presence<&T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = 12;
     /// let opt_x = Presence::Some(&x);
@@ -2301,7 +2301,7 @@ impl<T> Presence<&T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x = 12;
     /// let opt_x = Presence::Some(&x);
@@ -2339,7 +2339,7 @@ impl<T> Presence<&mut T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = 12;
     /// let opt_x = Presence::Some(&mut x);
@@ -2371,7 +2371,7 @@ impl<T> Presence<&mut T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let mut x = 12;
     /// let opt_x = Presence::Some(&mut x);
@@ -2410,7 +2410,7 @@ impl<T> Presence<Presence<T>> {
     /// Basic usage:
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<Presence<i32>> = Presence::Some(Presence::Some(6));
     /// assert_eq!(Presence::Some(6), x.flatten());
@@ -2431,7 +2431,7 @@ impl<T> Presence<Presence<T>> {
     /// Flattening multiple layers:
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<Presence<Presence<i32>>> = Presence::Some(Presence::Some(Presence::Some(6)));
     /// assert_eq!(Presence::Some(Presence::Some(6)), x.flatten());
@@ -2461,7 +2461,7 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let v = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
     /// let result: Presence<Vec<i32>> = v.into_iter().collect();
@@ -2516,7 +2516,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let v = vec![Presence::Some(2), Presence::Some(3), Presence::Some(4)];
     /// let result: Presence<i32> = v.into_iter().product();
@@ -2567,7 +2567,7 @@ where
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let v = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
     /// let result: Presence<i32> = v.into_iter().sum();
@@ -2615,7 +2615,7 @@ impl<T> From<T> for Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Presence<i32> = 42.into();
     /// assert_eq!(x, Presence::Some(42));
@@ -2639,7 +2639,7 @@ impl<T> From<Option<Option<T>>> for Presence<T> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let x: Option<Option<i32>> = Some(Some(42));
     /// let p: Presence<i32> = x.into();
@@ -2673,7 +2673,7 @@ impl<T> From<Presence<T>> for Option<Option<T>> {
     /// # Examples
     ///
     /// ```
-    /// use presence_rs::presence::Presence;
+    /// use presence_rs::Presence;
     ///
     /// let p = Presence::Some(42);
     /// let opt: Option<Option<i32>> = p.into();

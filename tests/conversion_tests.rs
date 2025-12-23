@@ -1,4 +1,4 @@
-use presence_rs::presence::Presence;
+use presence_rs::Presence;
 
 #[test]
 fn test_to_optional() {

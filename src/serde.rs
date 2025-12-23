@@ -21,7 +21,7 @@
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //!
 //! let some = Presence::Some(42);
 //! let json = serde_json::to_string(&some).unwrap();
@@ -37,7 +37,7 @@
 //!
 //! ```
 //! # #[cfg(feature = "serde")] {
-//! use presence_rs::presence::Presence;
+//! use presence_rs::Presence;
 //! use serde::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize)]

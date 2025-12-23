@@ -1,5 +1,5 @@
+use presence_rs::Presence;
 use presence_rs::presence;
-use presence_rs::presence::Presence;
 
 #[test]
 fn test_presence_macro_absent() {

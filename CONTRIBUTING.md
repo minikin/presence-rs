@@ -28,11 +28,10 @@ This document provides guidelines and instructions for contributing.
 
 **Note:** This project uses Rust edition 2024.
 
-   ```
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/minikin/presence-rs.git
-   cd presence-rs
+```bash
+git clone https://github.com/minikin/presence-rs.git
+cd presence-rs
    ```
 2. Install development dependencies:
    ```bash

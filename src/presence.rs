@@ -339,6 +339,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.to_optional(), None);
     /// ```
     #[inline]
+    #[must_use = "Returns the converted Option"]
     pub fn to_optional(self) -> Option<T> {
         match self {
             Presence::Some(value) => Some(value),
@@ -374,6 +375,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.to_nullable(), None);
     /// ```
     #[inline]
+    #[must_use = "Returns the converted nested Option"]
     pub fn to_nullable(self) -> Option<Option<T>> {
         match self {
             Presence::Some(value) => Some(Some(value)),
@@ -984,6 +986,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.unwrap_or("default"), "default");
     /// ```
     #[inline]
+    #[must_use = "if you don't need the returned value, use `if let` or `match` instead"]
     pub fn unwrap_or(self, default: T) -> T {
         match self {
             Presence::Some(val) => val,
@@ -1010,6 +1013,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.unwrap_or_else(|| 10), 10);
     /// ```
     #[inline]
+    #[must_use = "If you don't need the returned value, use `if let` or `match` instead"]
     pub fn unwrap_or_else<F>(self, f: F) -> T
     where
         F: FnOnce() -> T,
@@ -1046,6 +1050,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.unwrap_or_default(), 0);
     /// ```
     #[inline]
+    #[must_use = "If you don't need the returned value, use `if let` or `match` instead"]
     pub fn unwrap_or_default(self) -> T
     where
         T: Default,
@@ -1363,6 +1368,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.map(|s| s.len()), Presence::Absent);
     /// ```
     #[inline]
+    #[must_use = "Returns the mapped value"]
     pub fn map<U, F>(self, f: F) -> Presence<U>
     where
         F: FnOnce(T) -> U,
@@ -1436,6 +1442,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.map_or(42, |v| v.len()), 42);
     /// ```
     #[inline]
+    #[must_use = "Returns the mapped value or default"]
     pub fn map_or<U, F>(self, default: U, f: F) -> U
     where
         F: FnOnce(T) -> U,
@@ -1468,6 +1475,7 @@ impl<T> Presence<T> {
     /// assert_eq!(z.map_or_else(|| 42, |v| v.len()), 42);
     /// ```
     #[inline]
+    #[must_use = "Returns the mapped value or computed default"]
     pub fn map_or_else<U, D, F>(self, default: D, f: F) -> U
     where
         D: FnOnce() -> U,
@@ -1617,6 +1625,7 @@ impl<T> Presence<T> {
     /// assert_eq!(x.and(y), Presence::Absent);
     /// ```
     #[inline]
+    #[must_use = "Returns the logical AND result"]
     pub fn and<U>(self, optb: Presence<U>) -> Presence<U> {
         match self {
             Presence::Some(_) => optb,
@@ -1648,6 +1657,7 @@ impl<T> Presence<T> {
     /// assert_eq!(Presence::Absent.and_then(sq_then_to_string), Presence::Absent);
     /// ```
     #[inline]
+    #[must_use = "Returns the result of the closure"]
     pub fn and_then<U, F>(self, f: F) -> Presence<U>
     where
         F: FnOnce(T) -> Presence<U>,
@@ -1681,6 +1691,7 @@ impl<T> Presence<T> {
     /// assert_eq!(Presence::Absent.filter(is_even), Presence::Absent);
     /// ```
     #[inline]
+    #[must_use = "Returns the filtered value"]
     pub fn filter<P>(self, predicate: P) -> Self
     where
         P: FnOnce(&T) -> bool,
@@ -1727,6 +1738,7 @@ impl<T> Presence<T> {
     /// assert_eq!(x.or(y), Presence::Null);
     /// ```
     #[inline]
+    #[must_use = "Returns the logical OR result"]
     pub fn or(self, optb: Presence<T>) -> Presence<T> {
         match self {
             Presence::Some(_) => self,
@@ -1751,6 +1763,7 @@ impl<T> Presence<T> {
     /// assert_eq!(Presence::Absent.or_else(vikings), Presence::Some("vikings"));
     /// ```
     #[inline]
+    #[must_use = "Returns the value or computed alternative"]
     pub fn or_else<F>(self, f: F) -> Presence<T>
     where
         F: FnOnce() -> Presence<T>,
@@ -1793,6 +1806,7 @@ impl<T> Presence<T> {
     /// assert_eq!(x.xor(y), Presence::Absent);
     /// ```
     #[inline]
+    #[must_use = "Returns the logical XOR result"]
     pub fn xor(self, optb: Presence<T>) -> Presence<T> {
         match (self, optb) {
             (Presence::Some(a), Presence::Null | Presence::Absent) => Presence::Some(a),
@@ -1833,6 +1847,7 @@ impl<T> Presence<T> {
     /// assert_eq!(c.zip(d), Presence::Null);
     /// ```
     #[inline]
+    #[must_use = "this returns the zipped tuple, without modifying the originals"]
     pub fn zip<U>(self, other: Presence<U>) -> Presence<(T, U)> {
         match (self, other) {
             (Presence::Some(a), Presence::Some(b)) => Presence::Some((a, b)),
@@ -2438,6 +2453,7 @@ impl<T> Presence<Presence<T>> {
     /// assert_eq!(Presence::Some(6), x.flatten().flatten());
     /// ```
     #[inline]
+    #[must_use = "Returns the flattened value"]
     pub fn flatten(self) -> Presence<T> {
         match self {
             Presence::Some(inner) => inner,

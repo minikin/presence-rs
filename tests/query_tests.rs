@@ -148,7 +148,7 @@ fn test_cloned() {
 fn test_inspect() {
     let mut called = false;
     let some = Presence::Some(5);
-    some.inspect(|&x| {
+    let _ = some.inspect(|&x| {
         called = true;
         assert_eq!(x, 5);
     });
@@ -156,14 +156,14 @@ fn test_inspect() {
 
     called = false;
     let null: Presence<i32> = Presence::Null;
-    null.inspect(|_| {
+    let _ = null.inspect(|_| {
         called = true;
     });
     assert!(!called);
 
     called = false;
     let absent: Presence<i32> = Presence::Absent;
-    absent.inspect(|_| {
+    let _ = absent.inspect(|_| {
         called = true;
     });
     assert!(!called);

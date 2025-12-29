@@ -170,6 +170,7 @@
 
 use std::{fmt, iter::FusedIterator};
 
+#[must_use = "`Presence` may contain a value that should be used"]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Presence<T> {
     /// Field/key is absent from the structure
@@ -2039,6 +2040,54 @@ impl<T> Presence<T> {
     /////////////////////////////////////////////////////////////////////////
     // Transforming contained values
     /////////////////////////////////////////////////////////////////////////
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Presence<Result<T, E>> implementation
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T, E> Presence<Result<T, E>> {
+    /// Transposes a `Presence` of a [`Result`] into a [`Result`] of a `Presence`.
+    ///
+    /// [`Absent`]: Presence::Absent
+    /// [`Null`]: Presence::Null
+    /// [Ok]: Result::Ok
+    /// [Err]: Result::Err
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// #[derive(Debug, Eq, PartialEq)]
+    /// struct SomeErr;
+    ///
+    /// let x: Presence<Result<i32, SomeErr>> = Presence::Some(Ok(5));
+    /// let y: Result<Presence<i32>, SomeErr> = Ok(Presence::Some(5));
+    /// assert_eq!(x.transpose(), y);
+    ///
+    /// let x: Presence<Result<i32, SomeErr>> = Presence::Some(Err(SomeErr));
+    /// let y: Result<Presence<i32>, SomeErr> = Err(SomeErr);
+    /// assert_eq!(x.transpose(), y);
+    ///
+    /// let x: Presence<Result<i32, SomeErr>> = Presence::Null;
+    /// let y: Result<Presence<i32>, SomeErr> = Ok(Presence::Null);
+    /// assert_eq!(x.transpose(), y);
+    ///
+    /// let x: Presence<Result<i32, SomeErr>> = Presence::Absent;
+    /// let y: Result<Presence<i32>, SomeErr> = Ok(Presence::Absent);
+    /// assert_eq!(x.transpose(), y);
+    /// ```
+    #[inline]
+    #[must_use = "this returns the transposed result, without modifying the original"]
+    pub fn transpose(self) -> Result<Presence<T>, E> {
+        match self {
+            Presence::Some(Ok(v)) => Ok(Presence::Some(v)),
+            Presence::Some(Err(e)) => Err(e),
+            Presence::Null => Ok(Presence::Null),
+            Presence::Absent => Ok(Presence::Absent),
+        }
+    }
 }
 
 /// Display implementation

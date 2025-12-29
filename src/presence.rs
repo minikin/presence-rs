@@ -2049,14 +2049,8 @@ impl<T> Presence<T> {
 impl<T, E> Presence<Result<T, E>> {
     /// Transposes a `Presence` of a [`Result`] into a [`Result`] of a `Presence`.
     ///
-    /// [`Absent`] will be mapped to <code>[Ok]\([Absent])</code>.
-    /// [`Null`] will be mapped to <code>[Ok]\([Null])</code>.
-    /// <code>[Some]\([Ok]\(\_))</code> will be mapped to <code>[Ok]\([Some]\(\_))</code>.
-    /// <code>[Some]\([Err]\(\_))</code> will be mapped to <code>[Err]\(\_)</code>.
-    ///
     /// [`Absent`]: Presence::Absent
     /// [`Null`]: Presence::Null
-    /// [Some]: Presence::Some
     /// [Ok]: Result::Ok
     /// [Err]: Result::Err
     ///

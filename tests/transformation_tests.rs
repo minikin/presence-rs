@@ -245,3 +245,55 @@ fn test_unzip() {
     assert_eq!(first, Presence::Absent);
     assert_eq!(second, Presence::Absent);
 }
+
+#[test]
+fn test_transpose_some_ok() {
+    let x: Presence<Result<i32, &str>> = Presence::Some(Ok(5));
+    let result = x.transpose();
+    assert_eq!(result, Ok(Presence::Some(5)));
+}
+
+#[test]
+fn test_transpose_some_err() {
+    let x: Presence<Result<i32, &str>> = Presence::Some(Err("error"));
+    let result = x.transpose();
+    assert_eq!(result, Err("error"));
+}
+
+#[test]
+fn test_transpose_null() {
+    let x: Presence<Result<i32, &str>> = Presence::Null;
+    let result = x.transpose();
+    assert_eq!(result, Ok(Presence::Null));
+}
+
+#[test]
+fn test_transpose_absent() {
+    let x: Presence<Result<i32, &str>> = Presence::Absent;
+    let result = x.transpose();
+    assert_eq!(result, Ok(Presence::Absent));
+}
+
+#[test]
+fn test_transpose_with_custom_error_type() {
+    #[derive(Debug, PartialEq)]
+    struct CustomError(i32);
+
+    let ok: Presence<Result<String, CustomError>> = Presence::Some(Ok("hello".to_string()));
+    assert_eq!(ok.transpose(), Ok(Presence::Some("hello".to_string())));
+
+    let err: Presence<Result<String, CustomError>> = Presence::Some(Err(CustomError(42)));
+    assert_eq!(err.transpose(), Err(CustomError(42)));
+}
+
+#[test]
+fn test_transpose_chaining() {
+    // Demonstrate typical use case: processing a Presence<Result<T, E>> with ?
+    fn process() -> Result<Presence<i32>, &'static str> {
+        let data: Presence<Result<i32, &str>> = Presence::Some(Ok(42));
+        let value = data.transpose()?;
+        Ok(value.map(|x| x * 2))
+    }
+
+    assert_eq!(process(), Ok(Presence::Some(84)));
+}

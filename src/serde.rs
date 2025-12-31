@@ -3,6 +3,14 @@
 //! This module provides `Serialize` and `Deserialize` implementations for `Presence<T>`,
 //! enabling seamless JSON and other format support.
 //!
+//! # Important: Round-Trip Preservation
+//!
+//! To correctly preserve all three states on round-trip, use both attributes:
+//! - `#[serde(default)]` — deserializes missing fields as `Absent`
+//! - `#[serde(skip_serializing_if = "Presence::is_absent")]` — omits `Absent` fields from output
+//!
+//! Without `skip_serializing_if`, `Absent` serializes as `null` and becomes `Null` after round-trip.
+//!
 //! # Serialization Behavior
 //!
 //! - `Some(value)` → Serializes the value directly
@@ -13,7 +21,7 @@
 //!
 //! - `value` → `Some(value)`
 //! - `null` → `Null`
-//! - Missing field → Requires `#[serde(default)]` on the struct to produce `Absent`
+//! - Missing field → `Absent` (only when field has `#[serde(default)]`)
 //!
 //! # Examples
 //!

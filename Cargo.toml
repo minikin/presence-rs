@@ -2,6 +2,7 @@
 name = "presence-rs"
 version = "0.1.2"
 edition = "2024"
+rust-version = "1.85"
 authors = ["Oleksandr Prokhorenko <warbles.lieu_04@icloud.com>"]
 description = "A Rust library providing a tri-state type for representing value presence in schemas and data structures."
 license = "MIT"

@@ -174,10 +174,21 @@ use std::{fmt, iter::FusedIterator};
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Presence<T> {
     /// Field/key is absent from the structure
+    #[doc(alias = "undefined")]
+    #[doc(alias = "missing")]
+    #[doc(alias = "none")]
+    #[doc(alias = "empty")]
     Absent,
     /// Field/key is present but the value is null
+    #[doc(alias = "nil")]
+    #[doc(alias = "nothing")]
+    #[doc(alias = "void")]
     Null,
     /// Field/key is present with a concrete value
+    #[doc(alias = "value")]
+    #[doc(alias = "present")]
+    #[doc(alias = "defined")]
+    #[doc(alias = "just")]
     Some(T),
 }
 

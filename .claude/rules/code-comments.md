@@ -18,4 +18,4 @@ This rule is about comments in code only. It does not cover:
 - Rustdoc (`///`, `//!`) that documents public API, including `# Examples` and `# Errors` sections.
 - The `// Given` / `// When` / `// Then` comments in `tests/acceptance.rs`, which the Keeler workflow requires to mirror spec scenarios.
 
-A `PreToolUse` prompt hook in `.claude/settings.json` checks every `Write`/`Edit` against this rule and rejects changes that add redundant comments.
+A `PreToolUse` prompt hook in `.claude/settings.json` checks every `Write`/`Edit` of a Rust (`.rs`) file against this rule and rejects changes that add redundant comments.

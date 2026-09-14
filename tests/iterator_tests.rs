@@ -111,7 +111,7 @@ fn test_for_loop() {
 fn test_for_loop_with_references() {
     let some = Presence::Some(42);
     let mut values = Vec::new();
-    for val in some.iter() {
+    for val in &some {
         values.push(*val);
     }
     assert_eq!(values, vec![42]);

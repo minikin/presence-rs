@@ -2014,10 +2014,6 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
-    #[expect(
-        clippy::iter_without_into_iter,
-        reason = "`IntoIterator for &Presence<T>` is new public API and needs its own spec"
-    )]
     pub const fn iter(&self) -> Iter<'_, T> {
         Iter {
             inner: Item {
@@ -2181,6 +2177,42 @@ impl<T> IntoIterator for Presence<T> {
     /// ```
     fn into_iter(self) -> Self::IntoIter {
         Item { presence: self }
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Presence<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    /// Returns an iterator over a reference to the possibly contained value.
+    ///
+    /// The iterator yields one reference if the presence is [`Some`], otherwise none.
+    /// This is what makes `for x in &presence` work; it is equivalent to [`iter`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`iter`]: Presence::iter
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// let mut seen = Vec::new();
+    /// for v in &x {
+    ///     seen.push(*v);
+    /// }
+    /// assert_eq!(seen, vec![42]);
+    /// assert_eq!(x, Presence::Some(42)); // still usable
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!((&y).into_iter().next(), None);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!((&z).into_iter().next(), None);
+    /// ```
+    fn into_iter(self) -> Iter<'a, T> {
+        self.iter()
     }
 }
 

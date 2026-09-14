@@ -807,7 +807,7 @@ impl<T> Presence<T> {
         T: std::ops::Deref,
     {
         match self.as_ref() {
-            Presence::Some(val) => Presence::Some(val.deref()),
+            Presence::Some(val) => Presence::Some(&**val),
             Presence::Null => Presence::Null,
             Presence::Absent => Presence::Absent,
         }
@@ -844,7 +844,7 @@ impl<T> Presence<T> {
         T: std::ops::DerefMut,
     {
         match self.as_mut() {
-            Presence::Some(val) => Presence::Some(val.deref_mut()),
+            Presence::Some(val) => Presence::Some(&mut **val),
             Presence::Null => Presence::Null,
             Presence::Absent => Presence::Absent,
         }
@@ -919,8 +919,8 @@ impl<T> Presence<T> {
     pub fn expect(self, msg: &str) -> T {
         match self {
             Presence::Some(val) => val,
-            Presence::Null => panic!("{}: value was Null", msg),
-            Presence::Absent => panic!("{}: value was Absent", msg),
+            Presence::Null => panic!("{msg}: value was Null"),
+            Presence::Absent => panic!("{msg}: value was Absent"),
         }
     }
 
@@ -1563,6 +1563,10 @@ impl<T> Presence<T> {
     /// let z: Presence<&str> = Presence::Absent;
     /// assert_eq!(z.ok_or(0), Err(0));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(err)` if the presence is [`Null`] or [`Absent`].
     #[inline]
     pub fn ok_or<E>(self, err: E) -> Result<T, E> {
         match self {
@@ -1594,6 +1598,10 @@ impl<T> Presence<T> {
     /// let z: Presence<&str> = Presence::Absent;
     /// assert_eq!(z.ok_or_else(|| 0), Err(0));
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(err())` if the presence is [`Null`] or [`Absent`].
     #[inline]
     pub fn ok_or_else<E, F>(self, err: F) -> Result<T, E>
     where
@@ -1710,9 +1718,8 @@ impl<T> Presence<T> {
     {
         match self {
             Presence::Some(ref val) if predicate(val) => self,
-            Presence::Some(_) => Presence::Absent,
+            Presence::Some(_) | Presence::Absent => Presence::Absent,
             Presence::Null => Presence::Null,
-            Presence::Absent => Presence::Absent,
         }
     }
 
@@ -1823,8 +1830,9 @@ impl<T> Presence<T> {
         match (self, optb) {
             (Presence::Some(a), Presence::Null | Presence::Absent) => Presence::Some(a),
             (Presence::Null | Presence::Absent, Presence::Some(b)) => Presence::Some(b),
-            (Presence::Some(_), Presence::Some(_)) => Presence::Absent,
-            (Presence::Absent, _) | (_, Presence::Absent) => Presence::Absent,
+            (Presence::Some(_), Presence::Some(_))
+            | (Presence::Absent, _)
+            | (_, Presence::Absent) => Presence::Absent,
             (Presence::Null, Presence::Null) => Presence::Null,
         }
     }
@@ -2006,6 +2014,10 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
+    #[expect(
+        clippy::iter_without_into_iter,
+        reason = "`IntoIterator for &Presence<T>` is new public API and needs its own spec"
+    )]
     pub const fn iter(&self) -> Iter<'_, T> {
         Iter {
             inner: Item {
@@ -2040,6 +2052,10 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
+    #[expect(
+        clippy::iter_without_into_iter,
+        reason = "`IntoIterator for &mut Presence<T>` is new public API and needs its own spec"
+    )]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
             inner: Item {
@@ -2089,6 +2105,10 @@ impl<T, E> Presence<Result<T, E>> {
     /// let y: Result<Presence<i32>, SomeErr> = Ok(Presence::Absent);
     /// assert_eq!(x.transpose(), y);
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(e)` if the presence is `Some(Err(e))`.
     #[inline]
     #[must_use = "this returns the transposed result, without modifying the original"]
     pub fn transpose(self) -> Result<Presence<T>, E> {
@@ -2107,7 +2127,7 @@ impl<T: fmt::Display> fmt::Display for Presence<T> {
         match self {
             Presence::Absent => write!(f, "(absent)"),
             Presence::Null => write!(f, "null"),
-            Presence::Some(val) => write!(f, "{}", val),
+            Presence::Some(val) => write!(f, "{val}"),
         }
     }
 }
@@ -2264,14 +2284,14 @@ impl<'a, A> Iterator for Iter<'a, A> {
     }
 }
 
-impl<'a, A> DoubleEndedIterator for Iter<'a, A> {
+impl<A> DoubleEndedIterator for Iter<'_, A> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         self.inner.next_back()
     }
 }
 
-impl<'a, A> ExactSizeIterator for Iter<'a, A> {
+impl<A> ExactSizeIterator for Iter<'_, A> {
     #[inline]
     fn len(&self) -> usize {
         self.inner.len()
@@ -2317,14 +2337,14 @@ impl<'a, A> Iterator for IterMut<'a, A> {
     }
 }
 
-impl<'a, A> DoubleEndedIterator for IterMut<'a, A> {
+impl<A> DoubleEndedIterator for IterMut<'_, A> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         self.inner.next_back()
     }
 }
 
-impl<'a, A> ExactSizeIterator for IterMut<'a, A> {
+impl<A> ExactSizeIterator for IterMut<'_, A> {
     #[inline]
     fn len(&self) -> usize {
         self.inner.len()

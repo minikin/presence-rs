@@ -1,0 +1,275 @@
+# The Keeler gates, installed as .github/workflows/keeler.yml.
+#
+# Every step goes through a Keeler recipe, fetched here at the tag KEELER_REF
+# names below — CI has no plugin, so it reads the recipes from a checkout of
+# its own. What runs is therefore exactly what `keeler dev` runs on your
+# machine: a gate that passes locally and fails here (or the reverse) would
+# make both untrustworthy.
+#
+# Expect red on an existing codebase: that is the point. KEELER_COV_MIN and
+# KEELER_CRAP_MAX are the two bars, commented out below at their defaults —
+# set them to where this project stands today and tighten them as the debt
+# is repaid.
+name: Keeler gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # The Keeler these gates come from, written by the install that put this
+  # file here. Change it to move this project to another version — nothing
+  # else here needs editing, and nothing rewrites it for you.
+  # Pinned to a Keeler main commit, not the v0.4.1 tag: the tag's Justfile
+  # `mutants-diff` takes no BASE argument, which the mutants job passes.
+  # Move back to a tag once one ships with `mutants-diff BASE`.
+  KEELER_REF: bf5c63d5953dea42b4e9b63b5a81b6714a088b32
+  # The two bars, at their defaults. Uncommenting one moves it for every job
+  # below; exporting the same name in your shell moves it for `keeler dev`.
+  # KEELER_COV_MIN: 90
+  KEELER_CRAP_MAX: 10
+
+jobs:
+  lints:
+    name: Lints
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned tag
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/keeler.yml" >&2
+            exit 1
+          fi
+      - run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest,just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned tag
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/keeler.yml" >&2
+            exit 1
+          fi
+      - run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . test
+
+  quality:
+    name: Coverage + CRAP gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov,cargo-nextest,cargo-crap,just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned tag
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/keeler.yml" >&2
+            exit 1
+          fi
+      - name: Coverage gate
+        run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . cov
+      # The committed baseline is the shared reference: a change may not
+      # regress any function's score, whatever the absolute threshold says.
+      # Without one, only the threshold applies — run `keeler crap-baseline`
+      # and commit the result to turn the ratchet on.
+      - name: CRAP gate
+        run: |
+          if [ -f crap-baseline.json ]; then
+            just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . crap-delta
+          else
+            echo "no crap-baseline.json committed — threshold only, no delta gate"
+            just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . crap
+          fi
+
+  mutants:
+    name: Mutation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants,cargo-nextest,just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned tag
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/keeler.yml" >&2
+            exit 1
+          fi
+      # Changed lines only on a pull request: full mutation testing on an
+      # existing codebase takes hours and reports debt you did not just
+      # write. The recipe carries the settings the run needs — a bare
+      # `cargo mutants` here would carry none of them.
+      - name: Mutation tests (changed lines only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . mutants-diff "origin/${BASE_REF}"
+      - name: Upload mutants output
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: mutants-out
+          path: mutants.out/
+
+  # A task branch measures against the whole-repo state; it never moves it.
+  # `crap-baseline.json` is the reference every branch is judged by, and it
+  # settles at fan-in, on main — `keeler keeler-land` regenerates it there
+  # and stages it for a human to commit. A branch that moved it would record
+  # its own tree as the new normal, and every branch after it would measure
+  # against that instead of against main. The bars themselves are no longer
+  # a file a branch can reach: they are the two variables at the top of this
+  # workflow, which only a change to this file can move.
+  branch-baseline:
+    name: Branch leaves the baseline alone
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'keeler/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The check diffs against the merge base; a shallow clone has none.
+          fetch-depth: 0
+      - name: The branch left the baseline alone
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          fail() { echo "branch baseline: $*" >&2; exit 1; }
+          moved="baselines move only at land time, on main — run keeler keeler-land there"
+          # A checkout on a pull request holds the branches as origin/ refs
+          # and a detached HEAD; a local run holds them by name.
+          resolve() {
+            git rev-parse --verify -q "origin/$1^{commit}" \
+              || git rev-parse --verify -q "$1^{commit}"
+          }
+          base_ref="${BASE_REF:-main}"
+          base=$(resolve "$base_ref") \
+            || fail "cannot resolve base branch $base_ref — is the checkout fetch-depth: 0?"
+          merge_base=$(git merge-base "$base" HEAD) \
+            || fail "no merge base with $base_ref — is the checkout fetch-depth: 0?"
+          if ! git diff --quiet "$merge_base" HEAD -- crap-baseline.json; then
+            fail "crap-baseline.json changed on this branch — $moved"
+          fi
+          echo "crap-baseline.json is as $base_ref left it"
+
+  # A task branch — keeler/<spec-slug>/<task-id> — must carry the record
+  # /keeler:review writes, and the record must name a commit this branch
+  # made. Existence alone is a gate `touch` satisfies; ancestry of the head
+  # alone lets the merge base through, and that covers none of the branch's
+  # work. So: an ancestor of the head, and not of the base.
+  review-record:
+    name: Review record
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'keeler/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The check walks ancestry: a shallow clone sees none, and every
+          # honest record would fail.
+          fetch-depth: 0
+      - name: The record names a commit this branch made
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          fail() { echo "review record: $*" >&2; exit 1; }
+          shape="keeler/<spec-slug>/<task-id>"
+          case "${HEAD_REF:-}" in
+            keeler/?*/?*) ;;
+            *) fail "branch '${HEAD_REF:-}' is not $shape" ;;
+          esac
+          rest="${HEAD_REF#keeler/}"
+          case "$rest" in
+            */*/*) fail "branch '$HEAD_REF' is not $shape" ;;
+          esac
+          record="reviews/${rest%/*}/${rest#*/}.md"
+          [ -f "$record" ] || fail "$record is missing — /keeler:review writes it at the end of the stage"
+          lines=$(grep -c '^Commit:' "$record" || true)
+          [ "$lines" -eq 1 ] || fail "$record must carry exactly one Commit: line, found $lines"
+          sha=$(sed -n 's/^Commit:[[:space:]]*//p' "$record" | tr -d '[:space:]')
+          [ -n "$sha" ] || fail "$record: the Commit: line names nothing"
+          # A checkout on a pull request holds the branches as origin/ refs
+          # and a detached HEAD; a local run holds them by name.
+          resolve() {
+            git rev-parse --verify -q "origin/$1^{commit}" \
+              || git rev-parse --verify -q "$1^{commit}"
+          }
+          base_ref="${BASE_REF:-main}"
+          # What was checked out is what is under review, and asking for it
+          # by name is how the wrong history gets judged: a pull request
+          # from a fork resolves `origin/<branch>` against the *base*
+          # repository, so an abandoned branch there of the same name would
+          # stand in for this one. HEAD is unambiguous — the branch tip
+          # locally, the merge commit in CI, whose ancestry is the branch's
+          # plus the base's, and the base is excluded below.
+          head=$(git rev-parse --verify -q "HEAD^{commit}") \
+            || fail "cannot resolve the checked-out commit — is the checkout fetch-depth: 0?"
+          base=$(resolve "$base_ref") || fail "cannot resolve base branch $base_ref"
+          git rev-parse --verify -q "$sha^{commit}" >/dev/null \
+            || fail "$record: Commit: $sha is not a commit in this repository"
+          git merge-base --is-ancestor "$sha" "$head" \
+            || fail "$record: Commit: $sha is not an ancestor of $HEAD_REF — the record does not cover this branch"
+          if git merge-base --is-ancestor "$sha" "$base"; then
+            fail "$record: Commit: $sha is already on $base_ref — the record names no work of this branch"
+          fi
+          echo "$record names $sha, a commit of $HEAD_REF"

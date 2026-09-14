@@ -79,3 +79,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+lcov.info
+crap-report.json
+mutants.out*/
+.keeler/

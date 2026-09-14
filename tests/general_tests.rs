@@ -85,15 +85,22 @@ fn test_clone() {
 #[test]
 fn test_debug() {
     let some = Presence::Some(42);
-    let debug_str = format!("{:?}", some);
+    let debug_str = format!("{some:?}");
     assert!(debug_str.contains("Some"));
     assert!(debug_str.contains("42"));
 
     let null: Presence<i32> = Presence::Null;
-    let debug_str = format!("{:?}", null);
+    let debug_str = format!("{null:?}");
     assert!(debug_str.contains("Null"));
 
     let absent: Presence<i32> = Presence::Absent;
-    let debug_str = format!("{:?}", absent);
+    let debug_str = format!("{absent:?}");
     assert!(debug_str.contains("Absent"));
+}
+
+#[test]
+fn test_display() {
+    assert_eq!(Presence::Some(42).to_string(), "42");
+    assert_eq!(Presence::<i32>::Null.to_string(), "null");
+    assert_eq!(Presence::<i32>::Absent.to_string(), "(absent)");
 }

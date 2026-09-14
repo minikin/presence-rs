@@ -171,3 +171,64 @@ fn test_size_hint() {
     let iter = absent.iter();
     assert_eq!(iter.size_hint(), (0, Some(0)));
 }
+
+#[test]
+fn test_collect_into_presence() {
+    let all_some = vec![Presence::Some(1), Presence::Some(2)];
+    let result: Presence<Vec<i32>> = all_some.into_iter().collect();
+    assert_eq!(result, Presence::Some(vec![1, 2]));
+
+    let with_null = vec![Presence::Some(1), Presence::Null, Presence::Some(3)];
+    let result: Presence<Vec<i32>> = with_null.into_iter().collect();
+    assert_eq!(result, Presence::Null);
+
+    let with_absent = vec![Presence::Some(1), Presence::Absent, Presence::Some(3)];
+    let result: Presence<Vec<i32>> = with_absent.into_iter().collect();
+    assert_eq!(result, Presence::Absent);
+
+    let absent_after_null = vec![Presence::Null, Presence::Absent];
+    let result: Presence<Vec<i32>> = absent_after_null.into_iter().collect();
+    assert_eq!(result, Presence::Absent);
+
+    let empty: Vec<Presence<i32>> = vec![];
+    let result: Presence<Vec<i32>> = empty.into_iter().collect();
+    assert_eq!(result, Presence::Some(vec![]));
+}
+
+#[test]
+fn test_sum() {
+    let all_some = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
+    let result: Presence<i32> = all_some.into_iter().sum();
+    assert_eq!(result, Presence::Some(6));
+
+    let with_null = vec![Presence::Some(1), Presence::Null, Presence::Some(3)];
+    let result: Presence<i32> = with_null.into_iter().sum();
+    assert_eq!(result, Presence::Null);
+
+    let absent_after_null: Vec<Presence<i32>> = vec![Presence::Null, Presence::Absent];
+    let result: Presence<i32> = absent_after_null.into_iter().sum();
+    assert_eq!(result, Presence::Absent);
+
+    let empty: Vec<Presence<i32>> = vec![];
+    let result: Presence<i32> = empty.into_iter().sum();
+    assert_eq!(result, Presence::Some(0));
+}
+
+#[test]
+fn test_product() {
+    let all_some = vec![Presence::Some(2), Presence::Some(3), Presence::Some(4)];
+    let result: Presence<i32> = all_some.into_iter().product();
+    assert_eq!(result, Presence::Some(24));
+
+    let with_null = vec![Presence::Some(2), Presence::Null, Presence::Some(4)];
+    let result: Presence<i32> = with_null.into_iter().product();
+    assert_eq!(result, Presence::Null);
+
+    let absent_after_null: Vec<Presence<i32>> = vec![Presence::Null, Presence::Absent];
+    let result: Presence<i32> = absent_after_null.into_iter().product();
+    assert_eq!(result, Presence::Absent);
+
+    let empty: Vec<Presence<i32>> = vec![];
+    let result: Presence<i32> = empty.into_iter().product();
+    assert_eq!(result, Presence::Some(1));
+}

@@ -82,8 +82,7 @@ impl<T: Serialize> Serialize for Presence<T> {
     {
         match self {
             Presence::Some(value) => serializer.serialize_some(value),
-            Presence::Null => serializer.serialize_none(),
-            Presence::Absent => serializer.serialize_none(),
+            Presence::Null | Presence::Absent => serializer.serialize_none(),
         }
     }
 }

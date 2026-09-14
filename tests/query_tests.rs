@@ -145,6 +145,32 @@ fn test_cloned() {
 }
 
 #[test]
+fn test_copied_mut() {
+    let mut value = 5;
+    let some = Presence::Some(&mut value);
+    assert_eq!(some.copied(), Presence::Some(5));
+
+    let null: Presence<&mut i32> = Presence::Null;
+    assert_eq!(null.copied(), Presence::Null);
+
+    let absent: Presence<&mut i32> = Presence::Absent;
+    assert_eq!(absent.copied(), Presence::Absent);
+}
+
+#[test]
+fn test_cloned_mut() {
+    let mut value = String::from("hello");
+    let some = Presence::Some(&mut value);
+    assert_eq!(some.cloned(), Presence::Some(String::from("hello")));
+
+    let null: Presence<&mut String> = Presence::Null;
+    assert_eq!(null.cloned(), Presence::Null);
+
+    let absent: Presence<&mut String> = Presence::Absent;
+    assert_eq!(absent.cloned(), Presence::Absent);
+}
+
+#[test]
 fn test_inspect() {
     let mut called = false;
     let some = Presence::Some(5);

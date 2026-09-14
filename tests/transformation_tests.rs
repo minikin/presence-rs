@@ -1,6 +1,58 @@
 use presence_rs::Presence;
 
 #[test]
+fn test_take_if() {
+    let mut matching = Presence::Some(42);
+    assert_eq!(matching.take_if(|v| *v == 42), Presence::Some(42));
+    assert_eq!(matching, Presence::Absent);
+
+    let mut not_matching = Presence::Some(10);
+    assert_eq!(not_matching.take_if(|v| *v == 42), Presence::Absent);
+    assert_eq!(not_matching, Presence::Some(10));
+
+    let mut null: Presence<i32> = Presence::Null;
+    assert_eq!(null.take_if(|_| true), Presence::Absent);
+    assert_eq!(null, Presence::Null);
+
+    let mut absent: Presence<i32> = Presence::Absent;
+    assert_eq!(absent.take_if(|_| true), Presence::Absent);
+    assert_eq!(absent, Presence::Absent);
+}
+
+#[test]
+fn test_map_or_default() {
+    assert_eq!(Presence::Some(5).map_or_default(|x| x * 2), 10);
+    assert_eq!(Presence::<i32>::Null.map_or_default(|x| x * 2), 0);
+    assert_eq!(Presence::<i32>::Absent.map_or_default(|x| x * 2), 0);
+}
+
+#[test]
+fn test_zip_with() {
+    let add = |a: i32, b: i32| a + b;
+
+    assert_eq!(
+        Presence::Some(1).zip_with(Presence::Some(2), add),
+        Presence::Some(3)
+    );
+    assert_eq!(
+        Presence::Some(1).zip_with(Presence::Null, add),
+        Presence::Null
+    );
+    assert_eq!(
+        Presence::Null.zip_with(Presence::Some(2), add),
+        Presence::Null
+    );
+    assert_eq!(
+        Presence::Some(1).zip_with(Presence::Absent, add),
+        Presence::Absent
+    );
+    assert_eq!(
+        Presence::Null.zip_with(Presence::Absent, add),
+        Presence::Absent
+    );
+}
+
+#[test]
 fn test_map() {
     let some = Presence::Some(5);
     assert_eq!(some.map(|x| x * 2), Presence::Some(10));

@@ -18,7 +18,20 @@ serde = { version = "1.0", optional = true, features = ["derive"] }
 [dev-dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
+proptest = "1.11.0"
+# Enables the `serde` feature for tests, so the Keeler gates (which build
+# without `--all-features`) test and measure `src/serde.rs`.
+presence-rs = { path = ".", features = ["serde"] }
 
 [features]
 default = []
 serde = ["dep:serde"]
+
+[profile.mutants]
+inherits = "dev"
+debug = 0
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"

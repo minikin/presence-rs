@@ -33,7 +33,7 @@ fn test_serialize_absent() {
         field: Presence::Absent,
     };
     let json = serde_json::to_string(&data).unwrap();
-    assert_eq!(json, r#"{}"#);
+    assert_eq!(json, r"{}");
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn test_deserialize_null() {
 
 #[test]
 fn test_deserialize_absent() {
-    let json = r#"{}"#;
+    let json = r"{}";
     let data: TestStruct = serde_json::from_str(json).unwrap();
     assert_eq!(data.field, Presence::Absent);
 }
@@ -154,7 +154,7 @@ fn test_nested_presence_absent() {
         inner: Presence::Absent,
     };
     let json = serde_json::to_string(&data).unwrap();
-    assert_eq!(json, r#"{}"#);
+    assert_eq!(json, r"{}");
 
     let deserialized: NestedStruct = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized, data);
@@ -216,7 +216,7 @@ fn test_option_of_presence() {
 
     let data3 = OptionalPresence { field: None };
     let json3 = serde_json::to_string(&data3).unwrap();
-    assert_eq!(json3, r#"{}"#);
+    assert_eq!(json3, r"{}");
     let deserialized3: OptionalPresence = serde_json::from_str(&json3).unwrap();
     assert_eq!(data3, deserialized3);
 }

@@ -145,3 +145,110 @@ fn test_round_trip_conversions() {
     let back = Presence::from_nullable(nullable);
     assert_eq!(original, back);
 }
+
+#[test]
+fn test_to_nested_option() {
+    let some = Presence::Some(42);
+    assert_eq!(some.to_nested_option(), Some(Some(42)));
+
+    let null: Presence<i32> = Presence::Null;
+    assert_eq!(null.to_nested_option(), Some(None));
+
+    let absent: Presence<i32> = Presence::Absent;
+    assert_eq!(absent.to_nested_option(), None);
+}
+
+#[test]
+fn test_into_option_option_trait() {
+    let some: Option<Option<i32>> = Presence::Some(42).into();
+    assert_eq!(some, Some(Some(42)));
+
+    let null: Option<Option<i32>> = Presence::<i32>::Null.into();
+    assert_eq!(null, Some(None));
+
+    let absent: Option<Option<i32>> = Presence::<i32>::Absent.into();
+    assert_eq!(absent, None);
+}
+
+#[test]
+fn test_ok_or() {
+    assert_eq!(Presence::Some(42).ok_or("missing"), Ok(42));
+    assert_eq!(Presence::<i32>::Null.ok_or("missing"), Err("missing"));
+    assert_eq!(Presence::<i32>::Absent.ok_or("missing"), Err("missing"));
+}
+
+#[test]
+fn test_ok_or_else() {
+    assert_eq!(Presence::Some(42).ok_or_else(|| "missing"), Ok(42));
+    assert_eq!(
+        Presence::<i32>::Null.ok_or_else(|| "missing"),
+        Err("missing")
+    );
+    assert_eq!(
+        Presence::<i32>::Absent.ok_or_else(|| "missing"),
+        Err("missing")
+    );
+}
+
+#[test]
+fn test_as_deref() {
+    let some = Presence::Some(String::from("hello"));
+    assert_eq!(some.as_deref(), Presence::Some("hello"));
+
+    let null: Presence<String> = Presence::Null;
+    assert_eq!(null.as_deref(), Presence::Null);
+
+    let absent: Presence<String> = Presence::Absent;
+    assert_eq!(absent.as_deref(), Presence::Absent);
+}
+
+#[test]
+fn test_as_deref_mut() {
+    let mut some = Presence::Some(String::from("hello"));
+    if let Presence::Some(s) = some.as_deref_mut() {
+        s.make_ascii_uppercase();
+    }
+    assert_eq!(some, Presence::Some(String::from("HELLO")));
+
+    let mut null: Presence<String> = Presence::Null;
+    assert_eq!(null.as_deref_mut(), Presence::Null);
+
+    let mut absent: Presence<String> = Presence::Absent;
+    assert_eq!(absent.as_deref_mut(), Presence::Absent);
+}
+
+#[test]
+fn test_as_pin_ref() {
+    let some = Presence::Some(42);
+    assert_eq!(
+        std::pin::Pin::new(&some).as_pin_ref().map(|p| *p),
+        Presence::Some(42)
+    );
+
+    let null: Presence<i32> = Presence::Null;
+    assert_eq!(
+        std::pin::Pin::new(&null).as_pin_ref().map(|p| *p),
+        Presence::Null
+    );
+
+    let absent: Presence<i32> = Presence::Absent;
+    assert_eq!(
+        std::pin::Pin::new(&absent).as_pin_ref().map(|p| *p),
+        Presence::Absent
+    );
+}
+
+#[test]
+fn test_as_pin_mut() {
+    let mut some = Presence::Some(42);
+    if let Presence::Some(mut val) = std::pin::Pin::new(&mut some).as_pin_mut() {
+        *val = 100;
+    }
+    assert_eq!(some, Presence::Some(100));
+
+    let mut null: Presence<i32> = Presence::Null;
+    assert!(std::pin::Pin::new(&mut null).as_pin_mut().is_null());
+
+    let mut absent: Presence<i32> = Presence::Absent;
+    assert!(std::pin::Pin::new(&mut absent).as_pin_mut().is_absent());
+}

@@ -1,5 +1,42 @@
 {
   "env": {
     "KEELER_CRAP_MAX": "10"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/require-ocr-review.sh",
+            "statusMessage": "Checking OCR review before commit"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "if": "Edit(**/*.rs)",
+            "prompt": "You enforce this project's comment rule on a file change about to be made by an AI coding agent.\n\nRule: do not add comments that merely restate what the code already makes obvious. Comments are allowed only when they give context the code cannot express clearly: non-obvious constraints, reasoning, invariants, or workarounds.\n\nAlways allowed (never reject for these): Rustdoc (`///`, `//!`) documenting public API including `# Examples` / `# Errors`; `// Given`, `// When`, `// Then`, `// And` comments in tests/acceptance.rs; Markdown, JSON and other non-code files; licence headers; comments that were already present in the replaced text (old_string) and are unchanged.\n\nThe tool input is below. For Write, inspect `content`; for Edit, inspect only what `new_string` adds compared with `old_string`.\n\n$ARGUMENTS\n\nReject only when the change ADDS at least one code comment that restates the adjacent code (e.g. `// increment counter` above `counter += 1`, `// return the result` above `return result`, `# loop over files` above a for-loop). Respond with JSON only: {\"ok\": true} to allow, or {\"ok\": false, \"reason\": \"<quote the redundant comment(s) and say to remove them or replace them with context the code cannot express>\"} to reject.",
+            "statusMessage": "Checking for redundant comments"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "if": "Write(**/*.rs)",
+            "prompt": "You enforce this project's comment rule on a file change about to be made by an AI coding agent.\n\nRule: do not add comments that merely restate what the code already makes obvious. Comments are allowed only when they give context the code cannot express clearly: non-obvious constraints, reasoning, invariants, or workarounds.\n\nAlways allowed (never reject for these): Rustdoc (`///`, `//!`) documenting public API including `# Examples` / `# Errors`; `// Given`, `// When`, `// Then`, `// And` comments in tests/acceptance.rs; Markdown, JSON and other non-code files; licence headers; comments that were already present in the replaced text (old_string) and are unchanged.\n\nThe tool input is below. For Write, inspect `content`; for Edit, inspect only what `new_string` adds compared with `old_string`.\n\n$ARGUMENTS\n\nReject only when the change ADDS at least one code comment that restates the adjacent code (e.g. `// increment counter` above `counter += 1`, `// return the result` above `return result`, `# loop over files` above a for-loop). Respond with JSON only: {\"ok\": true} to allow, or {\"ok\": false, \"reason\": \"<quote the redundant comment(s) and say to remove them or replace them with context the code cannot express>\"} to reject.",
+            "statusMessage": "Checking for redundant comments"
+          }
+        ]
+      }
+    ]
   }
 }

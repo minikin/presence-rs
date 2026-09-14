@@ -2014,10 +2014,6 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
-    #[expect(
-        clippy::iter_without_into_iter,
-        reason = "`IntoIterator for &Presence<T>` is new public API and needs its own spec"
-    )]
     pub const fn iter(&self) -> Iter<'_, T> {
         Iter {
             inner: Item {
@@ -2052,10 +2048,6 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
-    #[expect(
-        clippy::iter_without_into_iter,
-        reason = "`IntoIterator for &mut Presence<T>` is new public API and needs its own spec"
-    )]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
             inner: Item {
@@ -2184,6 +2176,78 @@ impl<T> IntoIterator for Presence<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a Presence<T> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    /// Returns an iterator over a reference to the possibly contained value.
+    ///
+    /// The iterator yields one reference if the presence is [`Some`], otherwise none.
+    /// This is what makes `for x in &presence` work; it is equivalent to [`iter`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`iter`]: Presence::iter
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let x = Presence::Some(42);
+    /// let mut seen = Vec::new();
+    /// for v in &x {
+    ///     seen.push(*v);
+    /// }
+    /// assert_eq!(seen, vec![42]);
+    /// assert_eq!(x, Presence::Some(42)); // still usable
+    ///
+    /// let y: Presence<i32> = Presence::Null;
+    /// assert_eq!((&y).into_iter().next(), None);
+    ///
+    /// let z: Presence<i32> = Presence::Absent;
+    /// assert_eq!((&z).into_iter().next(), None);
+    /// ```
+    fn into_iter(self) -> Iter<'a, T> {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Presence<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+
+    /// Returns an iterator over a mutable reference to the possibly contained value.
+    ///
+    /// The iterator yields one mutable reference if the presence is [`Some`], otherwise none.
+    /// This is what makes `for x in &mut presence` work; it is equivalent to [`iter_mut`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`iter_mut`]: Presence::iter_mut
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// for v in &mut x {
+    ///     *v = 100;
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// assert_eq!((&mut y).into_iter().next(), None);
+    /// assert_eq!(y, Presence::Null);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// assert_eq!((&mut z).into_iter().next(), None);
+    /// assert_eq!(z, Presence::Absent);
+    /// ```
+    fn into_iter(self) -> IterMut<'a, T> {
+        self.iter_mut()
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // The Presence Iterators
 //////////////////////////////////////////////////////////////////////////
@@ -2250,7 +2314,8 @@ impl<A> FusedIterator for Item<A> {}
 
 /// An iterator over a reference to the `Some` variant of a `Presence`.
 ///
-/// This struct is created by the [`iter`] method on [`Presence`].
+/// This struct is created by the [`iter`] method on [`Presence`], or by iterating
+/// over `&Presence<T>` through its [`IntoIterator`] implementation.
 ///
 /// [`iter`]: Presence::iter
 /// [`Presence`]: Presence
@@ -2302,7 +2367,8 @@ impl<A> FusedIterator for Iter<'_, A> {}
 
 /// An iterator over a mutable reference to the `Some` variant of a `Presence`.
 ///
-/// This struct is created by the [`iter_mut`] method on [`Presence`].
+/// This struct is created by the [`iter_mut`] method on [`Presence`], or by iterating
+/// over `&mut Presence<T>` through its [`IntoIterator`] implementation.
 ///
 /// [`iter_mut`]: Presence::iter_mut
 /// [`Presence`]: Presence
@@ -2789,6 +2855,45 @@ impl<T> From<Presence<T>> for Option<Option<T>> {
             Presence::Absent => None,
             Presence::Null => Some(None),
             Presence::Some(value) => Some(Some(value)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Presence;
+    use proptest::prelude::*;
+
+    fn any_presence() -> impl Strategy<Value = Presence<i32>> {
+        prop_oneof![
+            any::<i32>().prop_map(Presence::Some),
+            Just(Presence::Null),
+            Just(Presence::Absent),
+        ]
+    }
+
+    proptest! {
+        #[test]
+        fn reference_iteration_matches_iter_and_iter_mut(presence in any_presence()) {
+            let expected_len = usize::from(presence.is_present());
+
+            let by_ref = (&presence).into_iter();
+            let by_iter = presence.iter();
+            prop_assert_eq!(by_ref.len(), expected_len);
+            prop_assert_eq!(by_ref.len(), by_iter.len());
+            prop_assert_eq!(by_ref.size_hint(), by_iter.size_hint());
+            prop_assert_eq!(by_ref.collect::<Vec<_>>(), by_iter.collect::<Vec<_>>());
+
+            let mut for_ref_mut = presence;
+            let mut for_iter_mut = presence;
+            let by_ref_mut = (&mut for_ref_mut).into_iter();
+            let by_iter_mut = for_iter_mut.iter_mut();
+            prop_assert_eq!(by_ref_mut.len(), expected_len);
+            prop_assert_eq!(by_ref_mut.size_hint(), by_iter_mut.size_hint());
+            prop_assert_eq!(
+                by_ref_mut.map(|v| *v).collect::<Vec<_>>(),
+                by_iter_mut.map(|v| *v).collect::<Vec<_>>()
+            );
         }
     }
 }

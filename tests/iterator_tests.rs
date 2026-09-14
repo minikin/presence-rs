@@ -35,14 +35,14 @@ fn test_iter() {
 #[test]
 fn test_iter_mut() {
     let mut some = Presence::Some(42);
-    for val in some.iter_mut() {
+    for val in &mut some {
         *val *= 2;
     }
     assert_eq!(some, Presence::Some(84));
 
     let mut null: Presence<i32> = Presence::Null;
     let mut count = 0;
-    for _ in null.iter_mut() {
+    for _ in &mut null {
         count += 1;
     }
     assert_eq!(count, 0);

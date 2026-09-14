@@ -2048,10 +2048,6 @@ impl<T> Presence<T> {
     /// assert_eq!(iter.next(), None);
     /// ```
     #[inline]
-    #[expect(
-        clippy::iter_without_into_iter,
-        reason = "`IntoIterator for &mut Presence<T>` is new public API and needs its own spec"
-    )]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
             inner: Item {
@@ -2213,6 +2209,42 @@ impl<'a, T> IntoIterator for &'a Presence<T> {
     /// ```
     fn into_iter(self) -> Iter<'a, T> {
         self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Presence<T> {
+    type Item = &'a mut T;
+    type IntoIter = IterMut<'a, T>;
+
+    /// Returns an iterator over a mutable reference to the possibly contained value.
+    ///
+    /// The iterator yields one mutable reference if the presence is [`Some`], otherwise none.
+    /// This is what makes `for x in &mut presence` work; it is equivalent to [`iter_mut`].
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`iter_mut`]: Presence::iter_mut
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let mut x = Presence::Some(42);
+    /// for v in &mut x {
+    ///     *v = 100;
+    /// }
+    /// assert_eq!(x, Presence::Some(100));
+    ///
+    /// let mut y: Presence<i32> = Presence::Null;
+    /// assert_eq!((&mut y).into_iter().next(), None);
+    /// assert_eq!(y, Presence::Null);
+    ///
+    /// let mut z: Presence<i32> = Presence::Absent;
+    /// assert_eq!((&mut z).into_iter().next(), None);
+    /// assert_eq!(z, Presence::Absent);
+    /// ```
+    fn into_iter(self) -> IterMut<'a, T> {
+        self.iter_mut()
     }
 }
 

@@ -22,7 +22,10 @@ env:
   # The Keeler these gates come from, written by the install that put this
   # file here. Change it to move this project to another version — nothing
   # else here needs editing, and nothing rewrites it for you.
-  KEELER_REF: v0.4.1
+  # Pinned to a Keeler main commit, not the v0.4.1 tag: the tag's Justfile
+  # `mutants-diff` takes no BASE argument, which the mutants job passes.
+  # Move back to a tag once one ships with `mutants-diff BASE`.
+  KEELER_REF: bf5c63d5953dea42b4e9b63b5a81b6714a088b32
   # The two bars, at their defaults. Uncommenting one moves it for every job
   # below; exporting the same name in your shell moves it for `keeler dev`.
   # KEELER_COV_MIN: 90

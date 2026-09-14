@@ -2314,7 +2314,8 @@ impl<A> FusedIterator for Item<A> {}
 
 /// An iterator over a reference to the `Some` variant of a `Presence`.
 ///
-/// This struct is created by the [`iter`] method on [`Presence`].
+/// This struct is created by the [`iter`] method on [`Presence`], or by iterating
+/// over `&Presence<T>` through its [`IntoIterator`] implementation.
 ///
 /// [`iter`]: Presence::iter
 /// [`Presence`]: Presence
@@ -2366,7 +2367,8 @@ impl<A> FusedIterator for Iter<'_, A> {}
 
 /// An iterator over a mutable reference to the `Some` variant of a `Presence`.
 ///
-/// This struct is created by the [`iter_mut`] method on [`Presence`].
+/// This struct is created by the [`iter_mut`] method on [`Presence`], or by iterating
+/// over `&mut Presence<T>` through its [`IntoIterator`] implementation.
 ///
 /// [`iter_mut`]: Presence::iter_mut
 /// [`Presence`]: Presence
@@ -2853,6 +2855,45 @@ impl<T> From<Presence<T>> for Option<Option<T>> {
             Presence::Absent => None,
             Presence::Null => Some(None),
             Presence::Some(value) => Some(Some(value)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Presence;
+    use proptest::prelude::*;
+
+    fn any_presence() -> impl Strategy<Value = Presence<i32>> {
+        prop_oneof![
+            any::<i32>().prop_map(Presence::Some),
+            Just(Presence::Null),
+            Just(Presence::Absent),
+        ]
+    }
+
+    proptest! {
+        #[test]
+        fn reference_iteration_matches_iter_and_iter_mut(presence in any_presence()) {
+            let expected_len = usize::from(presence.is_present());
+
+            let by_ref = (&presence).into_iter();
+            let by_iter = presence.iter();
+            prop_assert_eq!(by_ref.len(), expected_len);
+            prop_assert_eq!(by_ref.len(), by_iter.len());
+            prop_assert_eq!(by_ref.size_hint(), by_iter.size_hint());
+            prop_assert_eq!(by_ref.collect::<Vec<_>>(), by_iter.collect::<Vec<_>>());
+
+            let mut for_ref_mut = presence;
+            let mut for_iter_mut = presence;
+            let by_ref_mut = (&mut for_ref_mut).into_iter();
+            let by_iter_mut = for_iter_mut.iter_mut();
+            prop_assert_eq!(by_ref_mut.len(), expected_len);
+            prop_assert_eq!(by_ref_mut.size_hint(), by_iter_mut.size_hint());
+            prop_assert_eq!(
+                by_ref_mut.map(|v| *v).collect::<Vec<_>>(),
+                by_iter_mut.map(|v| *v).collect::<Vec<_>>()
+            );
         }
     }
 }

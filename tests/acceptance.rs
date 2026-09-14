@@ -117,3 +117,17 @@ fn iterating_a_mutably_borrowed_null_or_absent_yields_nothing_and_leaves_the_sta
     assert_eq!(null, Presence::Null);
     assert_eq!(absent, Presence::Absent);
 }
+
+// Spec 01 — equivalence and lint
+
+#[test]
+fn the_clippy_suppression_is_no_longer_needed() {
+    // Given the crate with both impls in place
+    let source = include_str!("../src/presence.rs");
+
+    // When its source is searched for the `iter_without_into_iter` expectation
+    let suppressions = source.matches("iter_without_into_iter").count();
+
+    // Then none is left, so pedantic clippy runs on `iter()` / `iter_mut()` unsuppressed
+    assert_eq!(suppressions, 0);
+}

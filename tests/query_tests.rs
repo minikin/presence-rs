@@ -76,6 +76,28 @@ fn test_get_or_insert_with() {
 }
 
 #[test]
+fn test_get_or_insert_default() {
+    let mut some = Presence::Some(5);
+    assert_eq!(*some.get_or_insert_default(), 5);
+    assert_eq!(some, Presence::Some(5));
+
+    let mut null: Presence<i32> = Presence::Null;
+    *null.get_or_insert_default() += 1;
+    assert_eq!(null, Presence::Some(1));
+
+    let mut absent: Presence<i32> = Presence::Absent;
+    assert_eq!(*absent.get_or_insert_default(), 0);
+    assert_eq!(absent, Presence::Some(0));
+}
+
+#[test]
+fn test_is_empty() {
+    assert!(!Presence::Some(1).is_empty());
+    assert!(Presence::<i32>::Null.is_empty());
+    assert!(Presence::<i32>::Absent.is_empty());
+}
+
+#[test]
 fn test_take() {
     let mut some = Presence::Some(5);
     assert_eq!(some.take(), Presence::Some(5));

@@ -65,7 +65,10 @@ making pattern matching more explicit and reducing cognitive load.
 forcing a tri-state model into a two-level optional structure.
 
 ```rust
+use presence_rs::Presence;
+
 // With Presence - clear and explicit
+let value: Presence<i32> = Presence::Null;
 match value {
     Presence::Absent => println!("Field not in payload"),
     Presence::Null => println!("Field explicitly null"),
@@ -73,6 +76,7 @@ match value {
 }
 
 // With Option<Option<T>> - confusing
+let value: Option<Option<i32>> = Some(None);
 match value {
     None => println!("Field not in payload"),
     Some(None) => println!("Field explicitly null"), // Wait, which None?
@@ -124,7 +128,7 @@ fn apply_update(current_name: &str, update: UserUpdate) -> String {
         Presence::Absent => {
             // Field not provided - keep current value
             println!("Name unchanged: {}", current_name);
-            current_name
+            current_name.to_string()
         }
         Presence::Null => {
             // Field explicitly set to null - clear it
@@ -146,7 +150,7 @@ let update = UserUpdate {
     age: Presence::Null, // Explicitly set to null
 };
 
-apply_update("Alice".to_string(), update);
+apply_update("Alice", update);
 // Output: "Name unchanged: Alice"
 ```
 

@@ -37,10 +37,9 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Run tests (no features)
-        run: cargo test --verbose
-
-      - name: Run tests (all features)
+      # Test builds always enable `serde` through the crate's dev-dependency on
+      # itself, so a separate no-features test run would repeat this one.
+      - name: Run tests
         run: cargo test --all-features --verbose
 
       - name: Run doc tests
@@ -76,36 +75,33 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Run clippy (no features)
-        run: cargo clippy --all-targets -- -D warnings
+      # Only a library-only build leaves the dev-dependencies, and with them
+      # the `serde` feature, out.
+      - name: Run clippy (library, no features)
+        run: cargo clippy --lib --no-default-features -- -D warnings
 
       - name: Run clippy (all features)
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-  coverage:
-    name: Code Coverage
+  msrv:
+    name: MSRV
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      # Keep in sync with `rust-version` in Cargo.toml.
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.85
 
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin
+      - name: Check library (no features)
+        run: cargo check --lib --no-default-features
 
-      - name: Generate coverage
-        run: cargo tarpaulin --all-features --workspace --timeout 120 --out xml
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./cobertura.xml
-          fail_ci_if_error: false
+      - name: Check library (all features)
+        run: cargo check --lib --all-features
 
   docs:
     name: Documentation

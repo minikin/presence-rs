@@ -9,14 +9,14 @@ license = "MIT"
 repository = "https://github.com/minikin/presence-rs"
 homepage = "https://github.com/minikin/presence-rs"
 keywords = ["nullable", "option", "undefined", "tri-state", "schema"]
-categories = ["data-structures", "encoding", "rust-patterns"]
+categories = ["data-structures", "encoding", "rust-patterns", "no-std", "no-std::no-alloc"]
 readme = "README.md"
 
 [package.metadata.docs.rs]
 all-features = true
 
 [dependencies]
-serde = { version = "1.0", optional = true, features = ["derive"] }
+serde = { version = "1.0", optional = true, default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 serde_json = "1.0"

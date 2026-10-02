@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`, so `for x in &presence` and `for x in &mut presence` work as they do for `Option`
 - `presence::IntoIter`, the owning iterator returned by `Presence::into_iter`, named as in `std::option`
 - `Presence::is_nullish_or`, `true` for `Null` and `Absent` or when the value matches the predicate
+- `no_std` support: the crate is `#![no_std]` and needs no allocator, with or without the `serde` feature
+
+### Changed
+- The `serde` feature now depends on `serde` with `default-features = false`, so it no longer turns on `serde`'s `std` feature for you. If your crate derives `Serialize`/`Deserialize` for types like `String` and relied on that, enable `serde`'s `std` (or `alloc`) feature in your own `Cargo.toml`
+- `collect`, `sum` and `product` over presences stream their values instead of copying them into a temporary `Vec`, so `sum`, `product` and collecting into a type that does not allocate perform no allocation. The target is always built from the values before the first `Null` or `Absent` (possibly none) and then discarded if the result is `Null` or `Absent`. Values before the first `Null` or `Absent` are now combined as they arrive, as with `Option`: an overflow among them panics in debug builds even though the result is `Null` or `Absent`
 
 ### Deprecated
 - `presence::Item`, renamed to `presence::IntoIter`

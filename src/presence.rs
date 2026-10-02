@@ -202,7 +202,7 @@
 //! - **References**: `as_ref()`, `as_mut()`, `as_deref()`, `copied()`, `cloned()`
 //! - **Iterating**: `iter()`, `iter_mut()`, `into_iter()`
 
-use std::{fmt, iter::FusedIterator};
+use core::{fmt, iter::FusedIterator};
 
 /// A value that is absent, explicitly null, or present.
 ///
@@ -739,10 +739,10 @@ impl<T> Presence<T> {
     /// assert_eq!(pinned.as_pin_ref(), Presence::Absent);
     /// ```
     #[inline]
-    pub const fn as_pin_ref(self: std::pin::Pin<&Self>) -> Presence<std::pin::Pin<&T>> {
-        match std::pin::Pin::get_ref(self) {
+    pub const fn as_pin_ref(self: core::pin::Pin<&Self>) -> Presence<core::pin::Pin<&T>> {
+        match core::pin::Pin::get_ref(self) {
             // SAFETY: `val` points into `self`, which is pinned, so it never moves either.
-            Presence::Some(val) => unsafe { Presence::Some(std::pin::Pin::new_unchecked(val)) },
+            Presence::Some(val) => unsafe { Presence::Some(core::pin::Pin::new_unchecked(val)) },
             Presence::Null => Presence::Null,
             Presence::Absent => Presence::Absent,
         }
@@ -778,12 +778,12 @@ impl<T> Presence<T> {
     /// assert_eq!(pinned.as_mut().as_pin_mut(), Presence::Absent);
     /// ```
     #[inline]
-    pub const fn as_pin_mut(self: std::pin::Pin<&mut Self>) -> Presence<std::pin::Pin<&mut T>> {
+    pub const fn as_pin_mut(self: core::pin::Pin<&mut Self>) -> Presence<core::pin::Pin<&mut T>> {
         // SAFETY: the `&mut Self` from `get_unchecked_mut` is only used to reach `val`, never to
         // move the `Presence`; `val` points into the pinned `self`, so re-pinning it is sound.
         unsafe {
-            match std::pin::Pin::get_unchecked_mut(self) {
-                Presence::Some(val) => Presence::Some(std::pin::Pin::new_unchecked(val)),
+            match core::pin::Pin::get_unchecked_mut(self) {
+                Presence::Some(val) => Presence::Some(core::pin::Pin::new_unchecked(val)),
                 Presence::Null => Presence::Null,
                 Presence::Absent => Presence::Absent,
             }
@@ -815,7 +815,7 @@ impl<T> Presence<T> {
     #[inline]
     pub const fn as_slice(&self) -> &[T] {
         match self {
-            Presence::Some(val) => std::slice::from_ref(val),
+            Presence::Some(val) => core::slice::from_ref(val),
             Presence::Null | Presence::Absent => &[],
         }
     }
@@ -849,7 +849,7 @@ impl<T> Presence<T> {
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         match self {
-            Presence::Some(val) => std::slice::from_mut(val),
+            Presence::Some(val) => core::slice::from_mut(val),
             Presence::Null | Presence::Absent => &mut [],
         }
     }
@@ -878,7 +878,7 @@ impl<T> Presence<T> {
     #[inline]
     pub fn as_deref(&self) -> Presence<&T::Target>
     where
-        T: std::ops::Deref,
+        T: core::ops::Deref,
     {
         match self.as_ref() {
             Presence::Some(val) => Presence::Some(&**val),
@@ -915,7 +915,7 @@ impl<T> Presence<T> {
     #[inline]
     pub fn as_deref_mut(&mut self) -> Presence<&mut T::Target>
     where
-        T: std::ops::DerefMut,
+        T: core::ops::DerefMut,
     {
         match self.as_mut() {
             Presence::Some(val) => Presence::Some(&mut **val),
@@ -1149,7 +1149,7 @@ impl<T> Presence<T> {
     #[inline]
     pub const fn take(&mut self) -> Presence<T> {
         let mut slot = Presence::Absent;
-        std::mem::swap(self, &mut slot);
+        core::mem::swap(self, &mut slot);
         slot
     }
 
@@ -1220,7 +1220,7 @@ impl<T> Presence<T> {
     /// ```
     #[inline]
     pub fn replace(&mut self, value: T) -> Presence<T> {
-        std::mem::replace(self, Presence::Some(value))
+        core::mem::replace(self, Presence::Some(value))
     }
 
     /// Inserts `value` into the presence, then returns a mutable reference to it.
@@ -2697,6 +2697,62 @@ impl<T> Presence<Presence<T>> {
 // FromIterator trait implementation
 /////////////////////////////////////////////////////////////////////////////
 
+/// Feeds the `Some` values of `iter` to `combine` without buffering them, then applies
+/// the `Absent` over `Null` over `Some` rule to the result.
+///
+/// `combine` sees the values up to the first `Null` or `Absent`, and may stop earlier
+/// (collecting into `Option` stops at the first `None`). Unless an `Absent` was seen,
+/// the rest of `iter` is then read until an `Absent` turns up, because a later `Null`
+/// or `Absent` still decides the result.
+fn stream<T, R, I>(iter: I, combine: impl FnOnce(Values<'_, I::IntoIter>) -> R) -> Presence<R>
+where
+    I: IntoIterator<Item = Presence<T>>,
+{
+    let mut iter = iter.into_iter();
+    let mut state = Presence::Some(());
+    let combined = combine(Values {
+        iter: &mut iter,
+        state: &mut state,
+    });
+    if !state.is_absent() {
+        for item in iter {
+            match item {
+                Presence::Some(_) => {}
+                Presence::Null => state = Presence::Null,
+                Presence::Absent => {
+                    state = Presence::Absent;
+                    break;
+                }
+            }
+        }
+    }
+    state.map(|()| combined)
+}
+
+/// The `Some` values of a stream of presences, ending at the first `Null` or `Absent`,
+/// which it records in `state`.
+struct Values<'a, I> {
+    iter: &'a mut I,
+    state: &'a mut Presence<()>,
+}
+
+impl<T, I: Iterator<Item = Presence<T>>> Iterator for Values<'_, I> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        if !self.state.is_present() {
+            return None;
+        }
+        match self.iter.next()? {
+            Presence::Some(value) => Some(value),
+            stop => {
+                *self.state = stop.map(|_| ());
+                None
+            }
+        }
+    }
+}
+
 impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// Collects an iterator of `Presence<A>` into `Presence<V>`.
     ///
@@ -2706,6 +2762,10 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
     /// Returns `Some(collection)` only if all elements are `Some`.
+    ///
+    /// The values are passed to `V::from_iter` as they arrive, without buffering, so a `V`
+    /// is always built — from the values before the first `Null` or `Absent`, possibly
+    /// none of them — and then discarded if the result is `Null` or `Absent`.
     ///
     /// # Examples
     ///
@@ -2729,22 +2789,7 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// assert_eq!(result, Presence::Absent);  // Absent takes precedence
     /// ```
     fn from_iter<I: IntoIterator<Item = Presence<A>>>(iter: I) -> Self {
-        let mut has_null = false;
-        let mut values = Vec::new();
-
-        for item in iter {
-            match item {
-                Presence::Absent => return Presence::Absent,
-                Presence::Null => has_null = true,
-                Presence::Some(value) => values.push(value),
-            }
-        }
-
-        if has_null {
-            Presence::Null
-        } else {
-            Presence::Some(values.into_iter().collect())
-        }
+        stream(iter, |values| values.collect())
     }
 }
 
@@ -2752,9 +2797,9 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
 // Product and Sum trait implementations
 /////////////////////////////////////////////////////////////////////////////
 
-impl<T, U> std::iter::Product<Presence<U>> for Presence<T>
+impl<T, U> core::iter::Product<Presence<U>> for Presence<T>
 where
-    T: std::iter::Product<U>,
+    T: core::iter::Product<U>,
 {
     /// Computes the product of an iterator of `Presence<U>` values.
     ///
@@ -2764,6 +2809,11 @@ where
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
     /// Returns `Some(product)` only if all elements are `Some`.
+    ///
+    /// The values are combined as they arrive, without buffering, so values that come
+    /// before a `Null` or `Absent` are still combined before the result is discarded.
+    /// As with `Option`, an overflow among them panics in debug builds even though the
+    /// result would be `Null` or `Absent`.
     ///
     /// # Examples
     ///
@@ -2787,28 +2837,13 @@ where
     /// assert_eq!(result, Presence::Some(1));  // Identity element for multiplication
     /// ```
     fn product<I: Iterator<Item = Presence<U>>>(iter: I) -> Self {
-        let mut has_null = false;
-        let mut values = Vec::new();
-
-        for item in iter {
-            match item {
-                Presence::Absent => return Presence::Absent,
-                Presence::Null => has_null = true,
-                Presence::Some(value) => values.push(value),
-            }
-        }
-
-        if has_null {
-            Presence::Null
-        } else {
-            Presence::Some(values.into_iter().product())
-        }
+        stream(iter, |values| values.product())
     }
 }
 
-impl<T, U> std::iter::Sum<Presence<U>> for Presence<T>
+impl<T, U> core::iter::Sum<Presence<U>> for Presence<T>
 where
-    T: std::iter::Sum<U>,
+    T: core::iter::Sum<U>,
 {
     /// Computes the sum of an iterator of `Presence<U>` values.
     ///
@@ -2818,6 +2853,11 @@ where
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
     /// Returns `Some(sum)` only if all elements are `Some`.
+    ///
+    /// The values are combined as they arrive, without buffering, so values that come
+    /// before a `Null` or `Absent` are still combined before the result is discarded.
+    /// As with `Option`, an overflow among them panics in debug builds even though the
+    /// result would be `Null` or `Absent`.
     ///
     /// # Examples
     ///
@@ -2841,22 +2881,7 @@ where
     /// assert_eq!(result, Presence::Some(0));  // Identity element for addition
     /// ```
     fn sum<I: Iterator<Item = Presence<U>>>(iter: I) -> Self {
-        let mut has_null = false;
-        let mut values = Vec::new();
-
-        for item in iter {
-            match item {
-                Presence::Absent => return Presence::Absent,
-                Presence::Null => has_null = true,
-                Presence::Some(value) => values.push(value),
-            }
-        }
-
-        if has_null {
-            Presence::Null
-        } else {
-            Presence::Some(values.into_iter().sum())
-        }
+        stream(iter, |values| values.sum())
     }
 }
 
@@ -2971,8 +2996,67 @@ impl<T> From<Presence<T>> for Option<Option<T>> {
 
 #[cfg(test)]
 mod tests {
-    use super::Presence;
+    extern crate std;
+
+    use super::{Presence, Values};
     use proptest::prelude::*;
+    use std::vec::Vec;
+
+    #[test]
+    fn values_stays_ended_after_a_null_even_when_polled_again() {
+        let mut source = [Presence::Some(1), Presence::Null, Presence::Some(2)].into_iter();
+        let mut state = Presence::Some(());
+        let mut values = Values {
+            iter: &mut source,
+            state: &mut state,
+        };
+
+        assert_eq!(values.next(), Some(1));
+        assert_eq!(values.next(), None);
+        assert_eq!(values.next(), None);
+        assert_eq!(state, Presence::Null);
+        assert_eq!(source.next(), Some(Presence::Some(2)));
+    }
+
+    #[test]
+    fn stream_finds_a_null_after_the_target_stopped_reading() {
+        let items = [Presence::Some(0), Presence::Null];
+
+        let collected: Presence<Option<Vec<i64>>> = items
+            .into_iter()
+            .map(|p| p.map(|x| (x != 0).then_some(x)))
+            .collect();
+
+        assert_eq!(collected, Presence::Null);
+    }
+
+    #[test]
+    fn stream_finds_an_absent_after_a_null_the_target_never_saw() {
+        let items = [Presence::Some(0), Presence::Null, Presence::Absent];
+
+        let collected: Presence<Option<Vec<i64>>> = items
+            .into_iter()
+            .map(|p| p.map(|x| (x != 0).then_some(x)))
+            .collect();
+
+        assert_eq!(collected, Presence::Absent);
+    }
+
+    #[test]
+    fn values_stays_ended_after_an_absent_even_when_polled_again() {
+        let mut source = [Presence::Some(1), Presence::Absent, Presence::Null].into_iter();
+        let mut state = Presence::Some(());
+        let mut values = Values {
+            iter: &mut source,
+            state: &mut state,
+        };
+
+        assert_eq!(values.next(), Some(1));
+        assert_eq!(values.next(), None);
+        assert_eq!(values.next(), None);
+        assert_eq!(state, Presence::Absent);
+        assert_eq!(source.next(), Some(Presence::Null));
+    }
 
     fn any_presence() -> impl Strategy<Value = Presence<i32>> {
         prop_oneof![

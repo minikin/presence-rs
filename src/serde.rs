@@ -32,7 +32,10 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for Presence<T> {
 
 #[cfg(test)]
 mod tests {
+    extern crate std;
+
     use super::*;
+    use std::string::{String, ToString};
 
     #[test]
     fn test_serialize_some() {

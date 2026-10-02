@@ -170,6 +170,16 @@
 
 use std::{fmt, iter::FusedIterator};
 
+/// A value that is absent, explicitly null, or present.
+///
+/// See the [module documentation](self) for the three states and the full API.
+///
+/// # Serde
+///
+/// With the `serde` feature, a struct field of this type keeps all three states apart
+/// only with both `#[serde(default)]` and
+/// `#[serde(skip_serializing_if = "Presence::is_absent")]`. Without `default`, a missing
+/// field deserializes as `Null`. See the [crate-level Serde section](crate#serde).
 #[must_use = "`Presence` may contain a value that should be used"]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Presence<T> {

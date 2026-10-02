@@ -19,6 +19,7 @@
   - [Examples](#examples)
     - [Basic Usage](#basic-usage)
     - [Practical Example: API Update Request](#practical-example-api-update-request)
+  - [Serde](#serde)
   - [Use Cases](#use-cases)
   - [Contributing](#contributing)
   - [License](#license)
@@ -148,6 +149,47 @@ let update = UserUpdate {
 apply_update("Alice".to_string(), update);
 // Output: "Name unchanged: Alice"
 ```
+
+## Serde
+
+Enable the `serde` feature. The example below also uses `serde` and `serde_json` directly:
+
+```toml
+[dependencies]
+presence-rs = { version = "0.2.0", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+`Some(value)` is written as the value; `Null` and `Absent` are both written as `null`.
+A struct field keeps all three states apart only when it has **both** attributes:
+
+- `#[serde(default)]` makes a missing field `Absent`. Without it, a missing `Presence`
+  field is read exactly like `null` (the same rule serde applies to `Option`), so it
+  silently becomes `Null`.
+- `#[serde(skip_serializing_if = "Presence::is_absent")]` leaves `Absent` out of the
+  output. Without it, `Absent` is written as `null` and reads back as `Null`.
+
+```rust
+use presence_rs::Presence;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Patch {
+    #[serde(default, skip_serializing_if = "Presence::is_absent")]
+    nickname: Presence<String>,
+}
+
+let set: Patch = serde_json::from_str(r#"{"nickname":"neo"}"#).unwrap();
+let cleared: Patch = serde_json::from_str(r#"{"nickname":null}"#).unwrap();
+let untouched: Patch = serde_json::from_str("{}").unwrap();
+assert_eq!(set.nickname, Presence::Some("neo".to_string()));
+assert_eq!(cleared.nickname, Presence::Null);
+assert_eq!(untouched.nickname, Presence::Absent);
+
+assert_eq!(serde_json::to_string(&untouched).unwrap(), "{}");
+```
+
 ## Use Cases
 
 This type is particularly useful in:

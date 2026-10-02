@@ -147,18 +147,6 @@ fn test_round_trip_conversions() {
 }
 
 #[test]
-fn test_to_nested_option() {
-    let some = Presence::Some(42);
-    assert_eq!(some.to_nested_option(), Some(Some(42)));
-
-    let null: Presence<i32> = Presence::Null;
-    assert_eq!(null.to_nested_option(), Some(None));
-
-    let absent: Presence<i32> = Presence::Absent;
-    assert_eq!(absent.to_nested_option(), None);
-}
-
-#[test]
 fn test_into_option_option_trait() {
     let some: Option<Option<i32>> = Presence::Some(42).into();
     assert_eq!(some, Some(Some(42)));

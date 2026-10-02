@@ -146,6 +146,39 @@
 //! assert_eq!(absent.unwrap_or_null_default(1, 2), 1);  // absent_default
 //! ```
 //!
+//! # Combining states
+//!
+//! The methods below follow one of these rules for `Null` and `Absent`:
+//!
+//! | Rule | Methods | Behavior |
+//! | --- | --- | --- |
+//! | Self decides | [`map`], [`and`], [`and_then`], [`filter`], [`flatten`], [`unzip`], [`transpose`], `copied`, `cloned` | A `Null` or `Absent` receiver keeps its state; only `Some` looks at the closure or the argument. |
+//! | First `Some` wins | [`or`], [`or_else`] | `self` if it is `Some`, otherwise the alternative, whatever its state. |
+//! | `Absent` over `Null` over `Some` | [`zip`], [`zip_with`], `collect`, `sum`, `product` | `Absent` if any input is `Absent`, otherwise `Null` if any is `Null`, otherwise `Some`. The state of the result does not depend on the order of the inputs. |
+//! | `xor` | [`xor`] | The `Some` side if exactly one side is `Some`; `Null` if both are `Null`; otherwise `Absent`, including for two `Some`s. |
+//!
+//! So `Null.and(Absent)` is `Null` and `Null.or(Absent)` is `Absent`, while
+//! `Null.zip(Absent)` is `Absent` whichever side each is on.
+//!
+//! Where a method has to invent a "nothing" result — [`filter`] rejecting a value,
+//! [`xor`] of two `Some`s, [`take_if`] taking nothing — it returns `Absent`. In PATCH terms
+//! `Absent` means "leave the field unchanged", the safe default; `Null` would mean "clear
+//! it".
+//!
+//! [`map`]: Presence::map
+//! [`and`]: Presence::and
+//! [`and_then`]: Presence::and_then
+//! [`filter`]: Presence::filter
+//! [`flatten`]: Presence::flatten
+//! [`unzip`]: Presence::unzip
+//! [`transpose`]: Presence::transpose
+//! [`or`]: Presence::or
+//! [`or_else`]: Presence::or_else
+//! [`zip`]: Presence::zip
+//! [`zip_with`]: Presence::zip_with
+//! [`xor`]: Presence::xor
+//! [`take_if`]: Presence::take_if
+//!
 //! # Cardinality
 //!
 //! For a base type with `N` possible values, `Presence<T>` provides `N + 2` states:
@@ -160,7 +193,8 @@
 //!
 //! The API is organized into several categories:
 //!
-//! - **Querying**: `is_absent()`, `is_null()`, `is_present()`, `is_defined()`, `is_nullish()`
+//! - **Querying**: `is_absent()`, `is_null()`, `is_present()`, `is_defined()`, `is_nullish()`,
+//!   `is_some_and()`, `is_absent_or()`, `is_nullish_or()`
 //! - **Extracting**: `expect()`, `unwrap()`, `unwrap_or()`, `unwrap_or_default()`
 //! - **Transforming**: `map()`, `filter()`, `and_then()`, `flatten()`
 //! - **Combining**: `and()`, `or()`, `xor()`, `zip()`, `zip_with()`
@@ -173,6 +207,20 @@ use std::{fmt, iter::FusedIterator};
 /// A value that is absent, explicitly null, or present.
 ///
 /// See the [module documentation](self) for the three states and the full API.
+///
+/// # Ordering
+///
+/// Presences are ordered `Absent < Null < Some(_)`, and two `Some` values compare by
+/// their contents. This order is part of the public API: it will not change without a
+/// breaking release.
+///
+/// ```
+/// use presence_rs::Presence;
+///
+/// assert!(Presence::<i32>::Absent < Presence::Null);
+/// assert!(Presence::Null < Presence::Some(i32::MIN));
+/// assert!(Presence::Some(1) < Presence::Some(2));
+/// ```
 ///
 /// # Serde
 ///
@@ -565,6 +613,8 @@ impl<T> Presence<T> {
 
     /// Returns `true` if the presence is [`Null`] or [`Absent`], or the value inside matches a predicate.
     ///
+    /// "Nullish" means `Null` or `Absent`, as in [`is_nullish`](Presence::is_nullish).
+    ///
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
     ///
@@ -574,23 +624,34 @@ impl<T> Presence<T> {
     /// use presence_rs::Presence;
     ///
     /// let x: Presence<u32> = Presence::Some(2);
-    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    /// assert_eq!(x.is_nullish_or(|x| x > 1), true);
     ///
     /// let x: Presence<u32> = Presence::Some(0);
-    /// assert_eq!(x.is_null_or(|x| x > 1), false);
+    /// assert_eq!(x.is_nullish_or(|x| x > 1), false);
     ///
     /// let x: Presence<u32> = Presence::Null;
-    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    /// assert_eq!(x.is_nullish_or(|x| x > 1), true);
     ///
     /// let x: Presence<u32> = Presence::Absent;
-    /// assert_eq!(x.is_null_or(|x| x > 1), true);
+    /// assert_eq!(x.is_nullish_or(|x| x > 1), true);
     /// ```
     #[inline]
-    pub fn is_null_or(self, f: impl FnOnce(T) -> bool) -> bool {
+    pub fn is_nullish_or(self, f: impl FnOnce(T) -> bool) -> bool {
         match self {
             Presence::Some(val) => f(val),
             Presence::Null | Presence::Absent => true,
         }
+    }
+
+    /// Returns `true` if the presence is `Null` or `Absent`, or the value inside matches a
+    /// predicate.
+    #[deprecated(
+        since = "0.3.0",
+        note = "renamed to `is_nullish_or`; it is also `true` for `Absent`"
+    )]
+    #[inline]
+    pub fn is_null_or(self, f: impl FnOnce(T) -> bool) -> bool {
+        self.is_nullish_or(f)
     }
 
     /// Converts from `&Presence<T>` to `Presence<&T>`.
@@ -680,6 +741,7 @@ impl<T> Presence<T> {
     #[inline]
     pub const fn as_pin_ref(self: std::pin::Pin<&Self>) -> Presence<std::pin::Pin<&T>> {
         match std::pin::Pin::get_ref(self) {
+            // SAFETY: `val` points into `self`, which is pinned, so it never moves either.
             Presence::Some(val) => unsafe { Presence::Some(std::pin::Pin::new_unchecked(val)) },
             Presence::Null => Presence::Null,
             Presence::Absent => Presence::Absent,
@@ -717,6 +779,8 @@ impl<T> Presence<T> {
     /// ```
     #[inline]
     pub const fn as_pin_mut(self: std::pin::Pin<&mut Self>) -> Presence<std::pin::Pin<&mut T>> {
+        // SAFETY: the `&mut Self` from `get_unchecked_mut` is only used to reach `val`, never to
+        // move the `Presence`; `val` points into the pinned `self`, so re-pinning it is sound.
         unsafe {
             match std::pin::Pin::get_unchecked_mut(self) {
                 Presence::Some(val) => Presence::Some(std::pin::Pin::new_unchecked(val)),
@@ -860,32 +924,12 @@ impl<T> Presence<T> {
         }
     }
 
-    /// Converts from `Presence<T>` to `Option<Option<T>>` for interoperability.
-    ///
-    /// This is useful when you need to work with code that uses nested `Option`s
-    /// to represent the same three-state concept as `Presence`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use presence_rs::Presence;
-    ///
-    /// let x: Presence<i32> = Presence::Some(42);
-    /// assert_eq!(x.to_nested_option(), Some(Some(42)));
-    ///
-    /// let y: Presence<i32> = Presence::Null;
-    /// assert_eq!(y.to_nested_option(), Some(None));
-    ///
-    /// let z: Presence<i32> = Presence::Absent;
-    /// assert_eq!(z.to_nested_option(), None);
-    /// ```
+    /// Converts from `Presence<T>` to `Option<Option<T>>`; the same as
+    /// [`to_nullable`](Presence::to_nullable).
+    #[deprecated(since = "0.3.0", note = "use `to_nullable`, which does the same")]
     #[inline]
     pub fn to_nested_option(self) -> Option<Option<T>> {
-        match self {
-            Presence::Absent => None,
-            Presence::Null => Some(None),
-            Presence::Some(val) => Some(Some(val)),
-        }
+        self.to_nullable()
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -1113,6 +1157,10 @@ impl<T> Presence<T> {
     /// leaving [`Absent`] in its place.
     ///
     /// [`Absent`]: Presence::Absent
+    ///
+    /// When nothing is taken the result is `Absent`, not `Null`, and the presence keeps its
+    /// state, `Null` included: in PATCH terms `Absent` means "leave the field unchanged",
+    /// the safe default, while `Null` would mean "clear it".
     ///
     /// # Examples
     ///
@@ -1369,6 +1417,8 @@ impl<T> Presence<T> {
     /////////////////////////////////////////////////////////////////////////
 
     /// Maps a `Presence<T>` to `Presence<U>` by applying a function to a contained value.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// Leaves [`Null`] and [`Absent`] values unchanged.
     ///
@@ -1629,6 +1679,8 @@ impl<T> Presence<T> {
 
     /// Returns [`Absent`] or [`Null`] if the presence is [`Absent`] or [`Null`], otherwise returns `optb`.
     ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
+    ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
@@ -1667,6 +1719,8 @@ impl<T> Presence<T> {
     /// Returns [`Absent`] or [`Null`] if the presence is [`Absent`] or [`Null`], otherwise calls `f` with the
     /// wrapped value and returns the result.
     ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
+    ///
     /// Some languages call this operation flatmap.
     ///
     /// [`Some`]: Presence::Some
@@ -1702,9 +1756,15 @@ impl<T> Presence<T> {
     /// Returns [`Absent`] if the presence is [`Absent`], [`Null`] if the presence is [`Null`],
     /// and returns the presence unchanged if the predicate returns `true`, otherwise returns [`Absent`].
     ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
+    ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
+    ///
+    /// A `Some` that fails the predicate becomes `Absent`, not `Null`: in PATCH terms
+    /// `Absent` means "leave the field unchanged", the safe default, while `Null` would
+    /// mean "clear it".
     ///
     /// # Examples
     ///
@@ -1734,6 +1794,8 @@ impl<T> Presence<T> {
     }
 
     /// Returns the presence if it contains a value, otherwise returns `optb`.
+    ///
+    /// State rule: [first `Some` wins](self#combining-states): when `self` isn't `Some`, `optb` is returned whatever its state.
     ///
     /// Arguments passed to `or` are eagerly evaluated; if you are passing the
     /// result of a function call, it is recommended to use [`or_else`], which is
@@ -1778,6 +1840,8 @@ impl<T> Presence<T> {
     /// Returns the presence if it contains a value, otherwise calls `f` and
     /// returns the result.
     ///
+    /// State rule: [first `Some` wins](self#combining-states): when `self` isn't `Some`, the result of `f` is returned whatever its state.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1808,6 +1872,10 @@ impl<T> Presence<T> {
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
+    ///
+    /// State rule: [`xor`](self#combining-states). Two `Some`s give `Absent`, not `Null`:
+    /// in PATCH terms `Absent` means "leave the field unchanged", the safe default, while
+    /// `Null` would mean "clear it".
     ///
     /// # Examples
     ///
@@ -1854,7 +1922,11 @@ impl<T> Presence<T> {
     /// Zips `self` with another `Presence`.
     ///
     /// If `self` is `Some(s)` and `other` is `Some(o)`, this method returns `Some((s, o))`.
-    /// Otherwise, returns `Absent` if either is `Absent`, or `Null` if both are `Null`.
+    /// Otherwise it returns `Absent` if either is `Absent`, and `Null` if neither is
+    /// `Absent` but at least one is `Null`.
+    ///
+    /// State rule: [`Absent` over `Null` over `Some`](self#combining-states): the state of
+    /// the result does not depend on the order of the arguments.
     ///
     /// # Examples
     ///
@@ -1888,8 +1960,12 @@ impl<T> Presence<T> {
 
     /// Zips `self` and another `Presence` with function `f`.
     ///
+    /// State rule: [`Absent` over `Null` over `Some`](self#combining-states), as for
+    /// [`zip`](Presence::zip).
+    ///
     /// If `self` is `Some(s)` and `other` is `Some(o)`, this method returns `Some(f(s, o))`.
-    /// Otherwise, returns `Absent` if either is `Absent`, or `Null` if both are `Null`.
+    /// Otherwise it returns `Absent` if either is `Absent`, and `Null` if neither is
+    /// `Absent` but at least one is `Null`.
     ///
     /// # Examples
     ///
@@ -1931,29 +2007,9 @@ impl<T> Presence<T> {
         }
     }
 
-    /// Reduces `self` and another `Presence` with function `f`.
-    ///
-    /// This is an alias for [`zip_with`]. It combines two `Presence` values by applying
-    /// a function when both contain `Some` values.
-    ///
-    /// [`zip_with`]: Presence::zip_with
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use presence_rs::Presence;
-    ///
-    /// let x = Presence::Some(5);
-    /// let y = Presence::Some(10);
-    ///
-    /// assert_eq!(x.reduce(y, |a, b| a + b), Presence::Some(15));
-    ///
-    /// let z: Presence<i32> = Presence::Null;
-    /// assert_eq!(x.reduce(z, |a, b| a + b), Presence::Null);
-    ///
-    /// let a: Presence<i32> = Presence::Absent;
-    /// assert_eq!(a.reduce(y, |a, b| a + b), Presence::Absent);
-    /// ```
+    /// Combines `self` and another `Presence` with function `f`; the same as
+    /// [`zip_with`](Presence::zip_with), including its state rule.
+    #[deprecated(since = "0.3.0", note = "use `zip_with`, which does the same")]
     #[inline]
     pub fn reduce<U, R, F>(self, other: Presence<U>, f: F) -> Presence<R>
     where
@@ -1963,6 +2019,8 @@ impl<T> Presence<T> {
     }
 
     /// Unzips a presence containing a tuple of two values.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// If `self` is `Some((a, b))`, this method returns `(Some(a), Some(b))`.
     /// Otherwise, returns `(Null, Null)` if `self` is `Null`, or `(Absent, Absent)` if `self` is `Absent`.
@@ -2026,7 +2084,7 @@ impl<T> Presence<T> {
     #[inline]
     pub const fn iter(&self) -> Iter<'_, T> {
         Iter {
-            inner: Item {
+            inner: IntoIter {
                 presence: self.as_ref(),
             },
         }
@@ -2060,7 +2118,7 @@ impl<T> Presence<T> {
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         IterMut {
-            inner: Item {
+            inner: IntoIter {
                 presence: self.as_mut(),
             },
         }
@@ -2077,6 +2135,8 @@ impl<T> Presence<T> {
 
 impl<T, E> Presence<Result<T, E>> {
     /// Transposes a `Presence` of a [`Result`] into a [`Result`] of a `Presence`.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// [`Absent`]: Presence::Absent
     /// [`Null`]: Presence::Null
@@ -2156,7 +2216,7 @@ impl<T> Default for Presence<T> {
 // Iterator implementation
 impl<T> IntoIterator for Presence<T> {
     type Item = T;
-    type IntoIter = Item<T>;
+    type IntoIter = IntoIter<T>;
 
     /// Returns a consuming iterator over the possibly contained value.
     ///
@@ -2182,7 +2242,7 @@ impl<T> IntoIterator for Presence<T> {
     /// assert_eq!(v, vec![]);
     /// ```
     fn into_iter(self) -> Self::IntoIter {
-        Item { presence: self }
+        IntoIter { presence: self }
     }
 }
 
@@ -2281,11 +2341,15 @@ impl<'a, T> IntoIterator for &'a mut Presence<T> {
 /// assert_eq!(iter.next(), None);
 /// ```
 #[derive(Clone, Debug)]
-pub struct Item<A> {
+pub struct IntoIter<A> {
     presence: Presence<A>,
 }
 
-impl<A> Iterator for Item<A> {
+/// The former name of [`IntoIter`].
+#[deprecated(since = "0.3.0", note = "renamed to `IntoIter`")]
+pub type Item<A> = IntoIter<A>;
+
+impl<A> Iterator for IntoIter<A> {
     type Item = A;
 
     #[inline]
@@ -2303,7 +2367,7 @@ impl<A> Iterator for Item<A> {
     }
 }
 
-impl<A> DoubleEndedIterator for Item<A> {
+impl<A> DoubleEndedIterator for IntoIter<A> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         match self.presence.take() {
@@ -2313,14 +2377,14 @@ impl<A> DoubleEndedIterator for Item<A> {
     }
 }
 
-impl<A> ExactSizeIterator for Item<A> {
+impl<A> ExactSizeIterator for IntoIter<A> {
     #[inline]
     fn len(&self) -> usize {
         self.presence.len()
     }
 }
 
-impl<A> FusedIterator for Item<A> {}
+impl<A> FusedIterator for IntoIter<A> {}
 
 /// An iterator over a reference to the `Some` variant of a `Presence`.
 ///
@@ -2342,7 +2406,7 @@ impl<A> FusedIterator for Item<A> {}
 /// ```
 #[derive(Debug, Clone)]
 pub struct Iter<'a, A> {
-    inner: Item<&'a A>,
+    inner: IntoIter<&'a A>,
 }
 
 impl<'a, A> Iterator for Iter<'a, A> {
@@ -2396,7 +2460,7 @@ impl<A> FusedIterator for Iter<'_, A> {}
 /// ```
 #[derive(Debug)]
 pub struct IterMut<'a, A> {
-    inner: Item<&'a mut A>,
+    inner: IntoIter<&'a mut A>,
 }
 
 impl<'a, A> Iterator for IterMut<'a, A> {
@@ -2437,6 +2501,8 @@ impl<T> Presence<&T> {
     /// Maps a `Presence<&T>` to a `Presence<T>` by copying the contents of the
     /// presence.
     ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
+    ///
     /// # Examples
     ///
     /// ```
@@ -2468,6 +2534,8 @@ impl<T> Presence<&T> {
 
     /// Maps a `Presence<&T>` to a `Presence<T>` by cloning the contents of the
     /// presence.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// # Examples
     ///
@@ -2507,6 +2575,8 @@ impl<T> Presence<&mut T> {
     /// Maps a `Presence<&mut T>` to a `Presence<T>` by copying the contents of the
     /// presence.
     ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
+    ///
     /// # Examples
     ///
     /// ```
@@ -2538,6 +2608,8 @@ impl<T> Presence<&mut T> {
 
     /// Maps a `Presence<&mut T>` to a `Presence<T>` by cloning the contents of the
     /// presence.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// # Examples
     ///
@@ -2575,6 +2647,8 @@ impl<T> Presence<&mut T> {
 
 impl<T> Presence<Presence<T>> {
     /// Converts from `Presence<Presence<T>>` to `Presence<T>`.
+    ///
+    /// State rule: [self decides](self#combining-states): a `Null` or `Absent` receiver keeps its state.
     ///
     /// # Examples
     ///
@@ -2625,6 +2699,9 @@ impl<T> Presence<Presence<T>> {
 
 impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// Collects an iterator of `Presence<A>` into `Presence<V>`.
+    ///
+    /// State rule: [`Absent` over `Null` over `Some`](self#combining-states), the same
+    /// rule as [`Presence::zip`].
     ///
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
@@ -2681,6 +2758,9 @@ where
 {
     /// Computes the product of an iterator of `Presence<U>` values.
     ///
+    /// State rule: [`Absent` over `Null` over `Some`](self#combining-states), the same
+    /// rule as [`Presence::zip`].
+    ///
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
     /// Returns `Some(product)` only if all elements are `Some`.
@@ -2731,6 +2811,9 @@ where
     T: std::iter::Sum<U>,
 {
     /// Computes the sum of an iterator of `Presence<U>` values.
+    ///
+    /// State rule: [`Absent` over `Null` over `Some`](self#combining-states), the same
+    /// rule as [`Presence::zip`].
     ///
     /// Returns `Absent` if any element is `Absent`.
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
@@ -2783,6 +2866,23 @@ where
 
 impl<T> From<T> for Presence<T> {
     /// Converts a value of type `T` into `Presence::Some(T)`.
+    ///
+    /// This applies to `Option` values too: converting `None` into a
+    /// `Presence<Option<U>>` gives `Some(None)`, not `Null` or `Absent`. To map an
+    /// `Option` onto the states, use [`from_optional`](Presence::from_optional)
+    /// (`None` becomes `Absent`) or [`from_nullable`](Presence::from_nullable) for
+    /// `Option<Option<T>>`.
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let none: Option<i32> = None;
+    /// let wrapped: Presence<Option<i32>> = none.into();
+    /// assert_eq!(wrapped, Presence::Some(None));
+    ///
+    /// let absent: Presence<i32> = Presence::from_optional(None);
+    /// assert_eq!(absent, Presence::Absent);
+    /// ```
     ///
     /// # Examples
     ///

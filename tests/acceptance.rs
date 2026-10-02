@@ -4,6 +4,33 @@ use presence_rs::Presence;
 use proptest::prelude::*;
 use proptest::test_runner::FileFailurePersistence;
 
+fn persisted_config() -> ProptestConfig {
+    ProptestConfig {
+        failure_persistence: Some(Box::new(FileFailurePersistence::WithSource(
+            "proptest-regressions",
+        ))),
+        ..ProptestConfig::default()
+    }
+}
+
+fn any_presence() -> impl Strategy<Value = Presence<i32>> {
+    prop_oneof![
+        any::<i32>().prop_map(Presence::Some),
+        Just(Presence::Some(0)),
+        Just(Presence::Null),
+        Just(Presence::Absent),
+    ]
+}
+
+fn nullish_presence() -> impl Strategy<Value = Presence<i32>> {
+    prop_oneof![Just(Presence::Null), Just(Presence::Absent)]
+}
+
+/// The state of a presence with its value erased, so states of different types compare.
+fn state<T>(presence: &Presence<T>) -> Presence<()> {
+    presence.as_ref().map(|_| ())
+}
+
 // Spec 01 — shared borrow
 
 #[test]
@@ -204,10 +231,7 @@ fn an_absent_field_round_trips_with_both_attributes() {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig {
-        failure_persistence: Some(Box::new(FileFailurePersistence::WithSource("proptest-regressions"))),
-        ..ProptestConfig::default()
-    })]
+    #![proptest_config(persisted_config())]
 
     #[test]
     fn every_presence_value_survives_a_round_trip_with_both_attributes(
@@ -273,4 +297,309 @@ fn an_absent_field_without_skip_serializing_if_comes_back_as_null() {
     assert_eq!(json, r#"{"name":"Charlie","age":null}"#);
     // And the deserialized age equals Presence::Null
     assert_eq!(back.age, Presence::Null);
+}
+
+// Spec 03 — self decides and first Some wins
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn a_null_or_absent_receiver_passes_through_the_self_decides_combinators_unchanged(
+        p in nullish_presence(),
+        q in any_presence(),
+    ) {
+        // Given any presence p that is Null or Absent
+        // And any presence q and any function f
+        let expected = state(&p);
+
+        // When p.map(f), p.and(q), p.and_then(f) and p.filter(f) are evaluated
+        let mapped = p.map(|x| i64::from(x) * 2);
+        let anded = p.and(q);
+        let and_thened = p.and_then(|x| Presence::Some(x.to_string()));
+        let filtered = p.filter(|_| true);
+
+        // Then each result is in the same state as p
+        prop_assert_eq!(state(&mapped), expected);
+        prop_assert_eq!(state(&anded), expected);
+        prop_assert_eq!(state(&and_thened), expected);
+        prop_assert_eq!(state(&filtered), expected);
+        // And an outer Null or Absent of type Presence<Presence<T>> flattens to the same state
+        let nested: Presence<Presence<i32>> = p.map(|_| q);
+        prop_assert_eq!(state(&nested.flatten()), expected);
+        // (copied, cloned, transpose and unzip follow the same rule)
+        prop_assert_eq!(state(&p.as_ref().copied()), expected);
+        prop_assert_eq!(state(&p.as_ref().cloned()), expected);
+        let transposed = p.map(Ok::<i32, ()>).transpose();
+        prop_assert_eq!(transposed.map(|t| state(&t)), Ok(expected));
+        let (left, right) = p.map(|x| (x, x)).unzip();
+        prop_assert_eq!((state(&left), state(&right)), (expected, expected));
+    }
+
+    #[test]
+    fn and_on_some_returns_the_argument_unchanged(x in any::<i32>(), q in any_presence()) {
+        // Given p = Some(x) for any x and any presence q
+        let p = Presence::Some(x);
+
+        // When p.and(q) is evaluated
+        let result = p.and(q);
+
+        // Then the result equals q
+        prop_assert_eq!(result, q);
+    }
+
+    #[test]
+    fn or_returns_self_when_some_otherwise_the_argument_unchanged(
+        p in any_presence(),
+        q in any_presence(),
+    ) {
+        // Given any presences p and q
+        // When p.or(q) is evaluated
+        let result = p.or(q);
+
+        // Then the result is p if p is Some, otherwise exactly q
+        let expected = if p.is_present() { p } else { q };
+        prop_assert_eq!(result, expected);
+        prop_assert_eq!(p.or_else(|| q), expected);
+        // And Null.or(Absent) is Absent and Absent.or(Null) is Null
+        prop_assert_eq!(Presence::<i32>::Null.or(Presence::Absent), Presence::Absent);
+        prop_assert_eq!(Presence::<i32>::Absent.or(Presence::Null), Presence::Null);
+    }
+}
+
+// Spec 03 — Absent over Null over Some
+
+/// The precedence rule written out once: Absent if any input is Absent, otherwise
+/// Null if any is Null, otherwise Some.
+fn precedence_state(states: &[Presence<()>]) -> Presence<()> {
+    if states.contains(&Presence::Absent) {
+        Presence::Absent
+    } else if states.contains(&Presence::Null) {
+        Presence::Null
+    } else {
+        Presence::Some(())
+    }
+}
+
+fn small_presence() -> impl Strategy<Value = Presence<i64>> {
+    prop_oneof![
+        (-9_i64..=9).prop_map(Presence::Some),
+        Just(Presence::Null),
+        Just(Presence::Absent),
+    ]
+}
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn zip_gives_absent_precedence_over_null_and_null_over_some(
+        p in any_presence(),
+        q in any_presence(),
+    ) {
+        // Given any presences p and q
+        // When p.zip(q) is evaluated
+        let zipped = p.zip(q);
+
+        // Then the result is Some((a, b)) if both are Some
+        if let (Presence::Some(a), Presence::Some(b)) = (p, q) {
+            prop_assert_eq!(zipped, Presence::Some((a, b)));
+        }
+        // And otherwise Absent if either is Absent
+        // And otherwise Null
+        prop_assert_eq!(state(&zipped), precedence_state(&[state(&p), state(&q)]));
+        prop_assert_eq!(state(&p.zip_with(q, i32::wrapping_add)), state(&zipped));
+        // And swapping p and q swaps the tuple but not the state
+        prop_assert_eq!(q.zip(p), zipped.map(|(a, b)| (b, a)));
+        // (zip and collect share one definition of the rule)
+        let collected: Presence<Vec<i32>> = [p, q].into_iter().collect();
+        prop_assert_eq!(state(&collected), state(&zipped));
+    }
+
+    #[test]
+    fn collect_sum_and_product_use_the_same_precedence_as_zip(
+        items in proptest::collection::vec(small_presence(), 0..6),
+    ) {
+        // Given any list of presences
+        let states: Vec<Presence<()>> = items.iter().map(state).collect();
+        let values: Vec<i64> = items.iter().filter_map(|p| p.to_optional()).collect();
+
+        // When it is collected into Presence<Vec<_>>, summed and multiplied
+        let collected: Presence<Vec<i64>> = items.iter().copied().collect();
+        let sum: Presence<i64> = items.iter().copied().sum();
+        let product: Presence<i64> = items.iter().copied().product();
+
+        // Then each result is Absent if any element is Absent
+        // And otherwise Null if any element is Null
+        // And otherwise Some of the collected values, sum and product
+        let expected = precedence_state(&states);
+        prop_assert_eq!(collected, expected.map(|()| values.clone()));
+        prop_assert_eq!(sum, expected.map(|()| values.iter().sum()));
+        prop_assert_eq!(product, expected.map(|()| values.iter().product()));
+    }
+}
+
+// Spec 03 — Absent results of xor, filter and take_if
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn xor_returns_the_single_some_null_for_two_nulls_and_absent_otherwise(
+        p in any_presence(),
+        q in any_presence(),
+    ) {
+        // Given any presences p and q
+        // When p.xor(q) is evaluated
+        let result = p.xor(q);
+
+        // Then the result is the Some side if exactly one side is Some
+        // And Null if both are Null
+        // And Absent in every other case, including Some xor Some
+        let expected = match (p, q) {
+            (Presence::Some(_), Presence::Null | Presence::Absent) => p,
+            (Presence::Null | Presence::Absent, Presence::Some(_)) => q,
+            (Presence::Null, Presence::Null) => Presence::Null,
+            _ => Presence::Absent,
+        };
+        prop_assert_eq!(result, expected);
+    }
+}
+
+#[test]
+fn filter_turns_a_failing_some_into_absent() {
+    // Given Some(3) and a predicate that rejects it
+    let presence = Presence::Some(3);
+
+    // When filter is applied
+    let result = presence.filter(|x| x % 2 == 0);
+
+    // Then the result is Absent, not Null
+    assert_eq!(result, Presence::Absent);
+}
+
+#[test]
+fn take_if_that_takes_nothing_returns_absent_and_leaves_the_presence_unchanged() {
+    // Given Some(10), Null and Absent, and a predicate that rejects 10
+    let originals = [Presence::Some(10), Presence::Null, Presence::Absent];
+
+    for original in originals {
+        let mut presence = original;
+
+        // When take_if is called on each
+        let taken = presence.take_if(|x| *x == 42);
+
+        // Then each call returns Absent
+        assert_eq!(taken, Presence::Absent);
+        // And each presence keeps its original state
+        assert_eq!(presence, original);
+    }
+}
+
+// Spec 03 — owning iterator is IntoIter
+
+#[test]
+fn into_iter_returns_presence_into_iter() {
+    // Given a Presence::Some(1)
+    let presence = Presence::Some(1);
+
+    // When it is converted with into_iter
+    let iter: presence_rs::presence::IntoIter<i32> = presence.into_iter();
+
+    // Then the iterator has type presence_rs::presence::IntoIter<i32>
+    // And it yields 1 once
+    assert_eq!(iter.collect::<Vec<_>>(), vec![1]);
+}
+
+// Spec 03 — is_nullish_or and deprecated names
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn is_nullish_or_is_true_for_null_and_absent_and_tests_the_value_of_some(
+        p in any_presence(),
+        threshold in any::<i32>(),
+    ) {
+        // Given any presence p and a predicate f
+        let f = |x: i32| x > threshold;
+
+        // When p.is_nullish_or(f) is evaluated
+        let result = p.is_nullish_or(f);
+
+        // Then it is true for Null and Absent
+        // And it equals f(x) for Some(x)
+        let expected = match p {
+            Presence::Some(x) => f(x),
+            Presence::Null | Presence::Absent => true,
+        };
+        prop_assert_eq!(result, expected);
+    }
+
+    #[test]
+    #[expect(deprecated, reason = "this scenario pins the deprecated names to their replacements")]
+    fn deprecated_names_still_work_and_match_their_replacements(
+        p in any_presence(),
+        q in any_presence(),
+        threshold in any::<i32>(),
+    ) {
+        // Given any presence p
+        // When to_nested_option, reduce, is_null_or and the Item type are used with
+        // deprecation allowed
+        // Then to_nested_option equals to_nullable
+        prop_assert_eq!(p.to_nested_option(), p.to_nullable());
+        // And reduce equals zip_with
+        prop_assert_eq!(p.reduce(q, i32::wrapping_sub), p.zip_with(q, i32::wrapping_sub));
+        // And is_null_or equals is_nullish_or
+        let f = |x: i32| x > threshold;
+        prop_assert_eq!(p.is_null_or(f), p.is_nullish_or(f));
+        // And a value of type Item<T> is the iterator into_iter returns
+        let iter: presence_rs::presence::Item<i32> = p.into_iter();
+        prop_assert_eq!(iter.collect::<Vec<_>>(), p.to_optional().into_iter().collect::<Vec<_>>());
+    }
+}
+
+// Spec 03 — ordering and From<T>
+
+fn rank(presence: Presence<i32>) -> u8 {
+    match presence {
+        Presence::Absent => 0,
+        Presence::Null => 1,
+        Presence::Some(_) => 2,
+    }
+}
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn presences_are_ordered_absent_then_null_then_some_by_value(
+        p in any_presence(),
+        q in any_presence(),
+    ) {
+        // Given any presences p and q
+        // When they are compared
+        let ordering = p.cmp(&q);
+
+        // Then Absent < Null < Some(x) for every x
+        // And Some(a).cmp(&Some(b)) equals a.cmp(&b)
+        let expected = match (p, q) {
+            (Presence::Some(a), Presence::Some(b)) => a.cmp(&b),
+            _ => rank(p).cmp(&rank(q)),
+        };
+        prop_assert_eq!(ordering, expected);
+        prop_assert_eq!(p.partial_cmp(&q), Some(expected));
+    }
+}
+
+#[test]
+fn converting_an_option_into_a_presence_of_option_wraps_it() {
+    // Given None of type Option<i32>
+    let option: Option<i32> = None;
+
+    // When it is converted with into() into Presence<Option<i32>>
+    let presence: Presence<Option<i32>> = option.into();
+
+    // Then the result is Some(None), not Null or Absent
+    assert_eq!(presence, Presence::Some(None));
 }

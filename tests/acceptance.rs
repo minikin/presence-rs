@@ -72,8 +72,8 @@ fn a_borrowed_presence_is_accepted_where_into_iterator_is_required() {
 
     // Then it returns vec![&7], an empty Vec and an empty Vec respectively
     assert_eq!(some, vec![&7]);
-    assert!(null.is_empty());
-    assert!(absent.is_empty());
+    assert_eq!(null, Vec::<&i32>::new());
+    assert_eq!(absent, Vec::<&i32>::new());
 }
 
 // Spec 01 — mutable borrow

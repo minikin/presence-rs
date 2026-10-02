@@ -2926,6 +2926,65 @@ impl<T> From<T> for Presence<T> {
     }
 }
 
+impl<'a, T> From<&'a Presence<T>> for Presence<&'a T> {
+    /// Converts from `&Presence<T>` to `Presence<&T>`, the same as
+    /// [`as_ref`](Presence::as_ref). `Null` and `Absent` keep their state.
+    ///
+    /// As with `Option`, name the target type: `Presence::from(&p)` alone could also mean
+    /// the blanket `From<T>`, which wraps the reference in `Some`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let name = Presence::Some(String::from("Ada"));
+    /// let borrowed: Presence<&String> = Presence::from(&name);
+    /// assert_eq!(borrowed.map(String::len), Presence::Some(3));
+    ///
+    /// let null: Presence<String> = Presence::Null;
+    /// let borrowed: Presence<&String> = Presence::from(&null);
+    /// assert_eq!(borrowed, Presence::Null);
+    ///
+    /// let absent: Presence<String> = Presence::Absent;
+    /// let borrowed: Presence<&String> = (&absent).into();
+    /// assert_eq!(borrowed, Presence::Absent);
+    /// ```
+    #[inline]
+    fn from(presence: &'a Presence<T>) -> Presence<&'a T> {
+        presence.as_ref()
+    }
+}
+
+impl<'a, T> From<&'a mut Presence<T>> for Presence<&'a mut T> {
+    /// Converts from `&mut Presence<T>` to `Presence<&mut T>`, the same as
+    /// [`as_mut`](Presence::as_mut). `Null` and `Absent` keep their state.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let mut count = Presence::Some(41);
+    /// if let Presence::Some(value) = Presence::<&mut i32>::from(&mut count) {
+    ///     *value += 1;
+    /// }
+    /// assert_eq!(count, Presence::Some(42));
+    ///
+    /// let mut null: Presence<i32> = Presence::Null;
+    /// let borrowed: Presence<&mut i32> = (&mut null).into();
+    /// assert_eq!(borrowed, Presence::Null);
+    ///
+    /// let mut absent: Presence<i32> = Presence::Absent;
+    /// let borrowed: Presence<&mut i32> = (&mut absent).into();
+    /// assert_eq!(borrowed, Presence::Absent);
+    /// ```
+    #[inline]
+    fn from(presence: &'a mut Presence<T>) -> Presence<&'a mut T> {
+        presence.as_mut()
+    }
+}
+
 impl<T> From<Option<Option<T>>> for Presence<T> {
     /// Converts a nested `Option<Option<T>>` into `Presence<T>`.
     ///

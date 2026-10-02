@@ -37,6 +37,8 @@
 //!
 //! See the [`mod@presence`] module for detailed documentation and examples.
 //!
+//! The crate is `#![no_std]` and needs no allocator, with or without the `serde` feature.
+//!
 //! # Serde
 //!
 //! With the `serde` feature, `Presence<T>` implements `Serialize` and `Deserialize`.
@@ -78,6 +80,8 @@
 //! ```
 //!
 //! [`Presence<T>`]: presence::Presence
+
+#![no_std]
 
 pub mod presence;
 pub use presence::Presence;

@@ -603,3 +603,101 @@ fn converting_an_option_into_a_presence_of_option_wraps_it() {
     // Then the result is Some(None), not Null or Absent
     assert_eq!(presence, Presence::Some(None));
 }
+
+// Spec 04 — streaming
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn streaming_keeps_the_absent_over_null_over_some_result(
+        items in proptest::collection::vec(small_presence(), 0..12),
+    ) {
+        // Given any list of presences
+        // (the spec 03 test `collect_sum_and_product_use_the_same_precedence_as_zip` covers
+        // targets that read every value; this one feeds Option targets, which stop at the
+        // first None, so a later Null or Absent must still be found)
+        let expected = precedence_state(&items.iter().map(state).collect::<Vec<_>>());
+        let optional = || items.iter().map(|p| p.map(|x| (x != 0).then_some(x)));
+
+        // When it is collected into Presence<Vec<_>>, summed and multiplied
+        let collected: Presence<Option<Vec<i64>>> = optional().collect();
+        let sum: Presence<Option<i64>> = optional().sum();
+        let product: Presence<Option<i64>> = optional().product();
+
+        // Then each result is Absent if any element is Absent
+        // And otherwise Null if any element is Null
+        // And otherwise Some of the collected values, sum and product
+        prop_assert_eq!(state(&collected), expected);
+        prop_assert_eq!(state(&sum), expected);
+        prop_assert_eq!(state(&product), expected);
+    }
+
+    #[test]
+    fn iteration_stops_at_the_first_absent_and_otherwise_reads_every_element(
+        items in proptest::collection::vec(small_presence(), 0..12),
+    ) {
+        // Given any list of presences
+        let expected = items
+            .iter()
+            .position(Presence::is_absent)
+            .map_or(items.len(), |index| index + 1);
+
+        // When it is collected, summed or multiplied through an iterator that counts
+        // the elements it yields
+        let count = std::cell::Cell::new(0_usize);
+        let counted = || items.iter().copied().inspect(|_| count.set(count.get() + 1));
+        let _: Presence<Vec<i64>> = counted().collect();
+        let collected = count.replace(0);
+        let _: Presence<i64> = counted().sum();
+        let summed = count.replace(0);
+        let _: Presence<i64> = counted().product();
+        let multiplied = count.replace(0);
+        let _: Presence<Option<Vec<i64>>> =
+            counted().map(|p| p.map(|x| (x != 0).then_some(x))).collect();
+        let stopped_early = count.replace(0);
+
+        // Then the count is the position of the first Absent plus one, if there is an Absent
+        // And otherwise the count is the length of the list, even when a Null came first
+        prop_assert_eq!(
+            (collected, summed, multiplied, stopped_early),
+            (expected, expected, expected, expected)
+        );
+    }
+}
+
+#[test]
+fn a_null_followed_by_an_absent_still_gives_absent() {
+    // Given the list [Some(1), Null, Some(2), Absent]
+    let items = [
+        Presence::Some(1),
+        Presence::Null,
+        Presence::Some(2),
+        Presence::Absent,
+    ];
+
+    // When it is collected, summed and multiplied
+    let collected: Presence<Vec<i32>> = items.into_iter().collect();
+    let sum: Presence<i32> = items.into_iter().sum();
+    let product: Presence<i32> = items.into_iter().product();
+
+    // Then every result is Absent
+    assert_eq!(collected, Presence::Absent);
+    assert_eq!(sum, Presence::Absent);
+    assert_eq!(product, Presence::Absent);
+}
+
+#[test]
+#[cfg_attr(
+    not(debug_assertions),
+    ignore = "overflow checks are off without debug assertions"
+)]
+#[should_panic(expected = "overflow")]
+fn values_before_a_null_are_combined_as_they_arrive() {
+    // Given the list [Some(i32::MAX), Some(1), Null]
+    let items = [Presence::Some(i32::MAX), Presence::Some(1), Presence::Null];
+
+    // When it is summed in a debug build
+    // Then the sum panics with an overflow, as Option's Sum does
+    let _: Presence<i32> = items.into_iter().sum();
+}

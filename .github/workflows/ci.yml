@@ -103,6 +103,27 @@ jobs:
       - name: Check library (all features)
         run: cargo check --lib --all-features
 
+  no-std:
+    name: no_std
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build library for a no_std target (no features)
+        run: cargo build --lib --target thumbv7em-none-eabihf --no-default-features
+
+      - name: Build library for a no_std target (serde)
+        run: cargo build --lib --target thumbv7em-none-eabihf --features serde
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest

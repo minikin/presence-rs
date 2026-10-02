@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Document the serde round-trip rule where users see it: the crate docs, the `Presence` type docs and the README now explain that a struct field needs both `#[serde(default)]` and `#[serde(skip_serializing_if = "Presence::is_absent")]`; without `default`, a missing field deserializes as `Null`
 - Build the docs.rs page with all features, so the `Serialize`/`Deserialize` impls are shown
+- Fix the README examples that did not compile; README code blocks now run as doctests
 
 ## [0.2.0] - 2026-01-02
 

@@ -131,3 +131,7 @@ macro_rules! presence {
         $crate::presence::Presence::Some($value)
     };
 }
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;

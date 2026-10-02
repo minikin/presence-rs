@@ -12,6 +12,9 @@ keywords = ["nullable", "option", "undefined", "tri-state", "schema"]
 categories = ["data-structures", "encoding", "rust-patterns"]
 readme = "README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 serde = { version = "1.0", optional = true, features = ["derive"] }
 

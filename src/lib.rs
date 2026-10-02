@@ -37,6 +37,46 @@
 //!
 //! See the [`mod@presence`] module for detailed documentation and examples.
 //!
+//! # Serde
+//!
+//! With the `serde` feature, `Presence<T>` implements `Serialize` and `Deserialize`.
+//! `Some(value)` is written as the value; `Null` and `Absent` are both written as `null`.
+//! When read back, a value becomes `Some` and `null` becomes `Null`.
+//!
+//! A struct field keeps all three states apart only when it has **both** attributes:
+//!
+//! - `#[serde(default)]` makes a missing field `Absent`. Without it, a missing `Presence`
+//!   field is read exactly like `null` (the same rule serde applies to `Option`), so it
+//!   silently becomes `Null`.
+//! - `#[serde(skip_serializing_if = "Presence::is_absent")]` leaves `Absent` out of the
+//!   output. Without it, `Absent` is written as `null` and reads back as `Null`.
+//!
+//! ```
+//! # #[cfg(feature = "serde")] {
+//! use presence_rs::Presence;
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Debug, PartialEq, Serialize, Deserialize)]
+//! struct Patch {
+//!     #[serde(default, skip_serializing_if = "Presence::is_absent")]
+//!     nickname: Presence<String>,
+//! }
+//!
+//! // Deserializing tells the three states apart.
+//! let set: Patch = serde_json::from_str(r#"{"nickname":"neo"}"#).unwrap();
+//! let cleared: Patch = serde_json::from_str(r#"{"nickname":null}"#).unwrap();
+//! let untouched: Patch = serde_json::from_str("{}").unwrap();
+//! assert_eq!(set.nickname, Presence::Some("neo".to_string()));
+//! assert_eq!(cleared.nickname, Presence::Null);
+//! assert_eq!(untouched.nickname, Presence::Absent);
+//!
+//! // Serializing writes each one back the way it came in.
+//! assert_eq!(serde_json::to_string(&set).unwrap(), r#"{"nickname":"neo"}"#);
+//! assert_eq!(serde_json::to_string(&cleared).unwrap(), r#"{"nickname":null}"#);
+//! assert_eq!(serde_json::to_string(&untouched).unwrap(), "{}");
+//! # }
+//! ```
+//!
 //! [`Presence<T>`]: presence::Presence
 
 pub mod presence;

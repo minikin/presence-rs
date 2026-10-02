@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`, so `for x in &presence` and `for x in &mut presence` work as they do for `Option`
 
+### Documentation
+- Document the serde round-trip rule where users see it: the crate docs, the `Presence` type docs and the README now explain that a struct field needs both `#[serde(default)]` and `#[serde(skip_serializing_if = "Presence::is_absent")]`; without `default`, a missing field deserializes as `Null`
+- Build the docs.rs page with all features, so the `Serialize`/`Deserialize` impls are shown
+
 ## [0.2.0] - 2026-01-02
 
 ### Added

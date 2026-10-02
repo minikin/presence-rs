@@ -30,19 +30,19 @@ fn test_is_absent_or() {
 }
 
 #[test]
-fn test_is_null_or() {
+fn test_is_nullish_or() {
     let some = Presence::Some(5);
     // Returns true if Some(val) AND predicate matches
-    assert!(some.is_null_or(|x| x > 3));
-    assert!(!some.is_null_or(|x| x > 10));
+    assert!(some.is_nullish_or(|x| x > 3));
+    assert!(!some.is_nullish_or(|x| x > 10));
 
     let null: Presence<i32> = Presence::Null;
     // Returns true for Null
-    assert!(null.is_null_or(|x| x > 3));
+    assert!(null.is_nullish_or(|x| x > 3));
 
     let absent: Presence<i32> = Presence::Absent;
     // Returns true for Absent as well
-    assert!(absent.is_null_or(|x| x > 3));
+    assert!(absent.is_nullish_or(|x| x > 3));
 }
 
 #[test]

@@ -9,11 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`, so `for x in &presence` and `for x in &mut presence` work as they do for `Option`
+- `presence::IntoIter`, the owning iterator returned by `Presence::into_iter`, named as in `std::option`
+- `Presence::is_nullish_or`, `true` for `Null` and `Absent` or when the value matches the predicate
+
+### Deprecated
+- `presence::Item`, renamed to `presence::IntoIter`
+- `Presence::is_null_or`, renamed to `is_nullish_or` because it is also `true` for `Absent`
+- `Presence::to_nested_option`, the same as `to_nullable`
+- `Presence::reduce`, the same as `zip_with`
 
 ### Documentation
 - Document the serde round-trip rule where users see it: the crate docs, the `Presence` type docs and the README now explain that a struct field needs both `#[serde(default)]` and `#[serde(skip_serializing_if = "Presence::is_absent")]`; without `default`, a missing field deserializes as `Null`
 - Build the docs.rs page with all features, so the `Serialize`/`Deserialize` impls are shown
 - Fix the README examples that did not compile; README code blocks now run as doctests
+- Document how combinators treat `Null` and `Absent` in a new "Combining states" section: `map`, `and`, `and_then`, `filter`, `flatten`, `unzip`, `transpose`, `copied` and `cloned` keep the receiver's state; `or` and `or_else` return the first `Some`, otherwise the alternative
+- Document that `zip`, `zip_with`, `collect`, `sum` and `product` give `Absent` precedence over `Null` and `Null` over `Some`, and fix the `zip` and `zip_with` docs, which claimed `Null` only when both sides are `Null`
+- Document the `xor` rule, and why a `filter` that rejects a value, an `xor` of two `Some`s and a `take_if` that takes nothing return `Absent`
+- Guarantee the ordering `Absent < Null < Some(_)` (with `Some` values compared by contents), and note that converting `None` into a `Presence<Option<_>>` gives `Some(None)`
 
 ## [0.2.0] - 2026-01-02
 

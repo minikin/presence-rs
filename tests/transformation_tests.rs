@@ -248,6 +248,13 @@ fn test_expect_on_null_panics() {
 }
 
 #[test]
+#[should_panic(expected = "custom panic message: value was Absent")]
+fn test_expect_on_absent_panics() {
+    let absent: Presence<i32> = Presence::Absent;
+    absent.expect("custom panic message");
+}
+
+#[test]
 fn test_flatten() {
     let nested_some = Presence::Some(Presence::Some(42));
     assert_eq!(nested_some.flatten(), Presence::Some(42));

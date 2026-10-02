@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `no_std` support: the crate is `#![no_std]` and needs no allocator, with or without the `serde` feature
 
 ### Changed
+- The published crate contains only the library source, README, LICENSE and CHANGELOG; repository tooling, specs and tests are no longer packaged
 - The `serde` feature now depends on `serde` with `default-features = false`, so it no longer turns on `serde`'s `std` feature for you. If your crate derives `Serialize`/`Deserialize` for types like `String` and relied on that, enable `serde`'s `std` (or `alloc`) feature in your own `Cargo.toml`
 - `collect`, `sum` and `product` over presences stream their values instead of copying them into a temporary `Vec`, so `sum`, `product` and collecting into a type that does not allocate perform no allocation. The target is always built from the values before the first `Null` or `Absent` (possibly none) and then discarded if the result is `Null` or `Absent`. Values before the first `Null` or `Absent` are now combined as they arrive, as with `Option`: an overflow among them panics in debug builds even though the result is `Null` or `Absent`
 

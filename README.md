@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/minikin/presence-rs/workflows/CI/badge.svg)](https://github.com/minikin/presence-rs/actions?query=workflow%3ACI)
 [![crates.io](https://img.shields.io/crates/v/presence-rs.svg)](https://crates.io/crates/presence-rs)
+[![docs.rs](https://img.shields.io/docsrs/presence-rs)](https://docs.rs/presence-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > A Rust library providing a tri-state type for representing value presence
@@ -27,7 +28,8 @@
 ## Overview
 
 `Presence<T>` extends the traditional `Option<T>` two-state model (Some/None)
-with an additional distinction between "absent" and "null".
+with an additional distinction between "absent" and "null". The crate is
+`#![no_std]` and needs no allocator.
 This is particularly useful when working with serialization formats like JSON
 where the following states are semantically different:
 

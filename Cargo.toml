@@ -11,6 +11,7 @@ homepage = "https://github.com/minikin/presence-rs"
 keywords = ["nullable", "option", "undefined", "tri-state", "schema"]
 categories = ["data-structures", "encoding", "rust-patterns", "no-std", "no-std::no-alloc"]
 readme = "README.md"
+include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [package.metadata.docs.rs]
 all-features = true

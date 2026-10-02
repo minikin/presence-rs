@@ -49,6 +49,20 @@ fn test_iter_mut() {
 }
 
 #[test]
+fn test_iter_mut_next_back() {
+    let mut some = Presence::Some(42);
+    let mut iter = some.iter_mut();
+    if let Some(value) = iter.next_back() {
+        *value += 1;
+    }
+    assert_eq!(iter.next_back(), None);
+    assert_eq!(some, Presence::Some(43));
+
+    let mut absent: Presence<i32> = Presence::Absent;
+    assert_eq!(absent.iter_mut().next_back(), None);
+}
+
+#[test]
 fn test_exact_size_iterator() {
     let some = Presence::Some(42);
     let iter = some.iter();

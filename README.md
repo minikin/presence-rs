@@ -115,45 +115,73 @@ assert!(some.is_present());
 
 ### Practical Example: API Update Request
 
+A PATCH request leaves out fields it does not touch, sends `null` for fields to
+clear, and sends values for fields to set. `Presence::apply_to` applies a field to
+the stored model (and returns the value it replaced, which this example ignores);
+`Presence::merge` folds several requests into one.
+
 ```rust
 use presence_rs::Presence;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
+struct User {
+    name: Option<String>,
+    email: Option<String>,
+    age: Option<u32>,
+}
+
 struct UserUpdate {
     name: Presence<String>,
     email: Presence<String>,
     age: Presence<u32>,
 }
 
-fn apply_update(current_name: &str, update: UserUpdate) -> String {
-    match update.name {
-        Presence::Absent => {
-            // Field not provided - keep current value
-            println!("Name unchanged: {}", current_name);
-            current_name.to_string()
-        }
-        Presence::Null => {
-            // Field explicitly set to null - clear it
-            println!("Name cleared");
-            String::new()
-        }
-        Presence::Some(new_name) => {
-            // Field has a new value - update it
-            println!("Name updated to: {}", new_name);
-            new_name
+impl UserUpdate {
+    fn apply_to(self, user: &mut User) {
+        self.name.apply_to(&mut user.name);
+        self.email.apply_to(&mut user.email);
+        self.age.apply_to(&mut user.age);
+    }
+
+    fn merge(self, later: UserUpdate) -> UserUpdate {
+        UserUpdate {
+            name: self.name.merge(later.name),
+            email: self.email.merge(later.email),
+            age: self.age.merge(later.age),
         }
     }
 }
 
-// Example: Partial update where only email is provided
-let update = UserUpdate {
-    name: Presence::Absent, // Not in request payload
-    email: Presence::Some("new@example.com".to_string()),
-    age: Presence::Null, // Explicitly set to null
+let mut user = User {
+    name: Some("Alice".to_string()),
+    email: Some("alice@example.com".to_string()),
+    age: Some(30),
 };
 
-apply_update("Alice", update);
-// Output: "Name unchanged: Alice"
+// Only the email is set and the age is cleared; the name is not in the payload.
+let update = UserUpdate {
+    name: Presence::Absent,
+    email: Presence::Some("new@example.com".to_string()),
+    age: Presence::Null,
+};
+
+// A later request sets the age again; merged, it wins over the earlier `null`.
+let later = UserUpdate {
+    name: Presence::Absent,
+    email: Presence::Absent,
+    age: Presence::Some(31),
+};
+
+update.merge(later).apply_to(&mut user);
+
+assert_eq!(
+    user,
+    User {
+        name: Some("Alice".to_string()),
+        email: Some("new@example.com".to_string()),
+        age: Some(31),
+    }
+);
 ```
 
 ## Serde

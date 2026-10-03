@@ -155,6 +155,7 @@
 //! | Self decides | [`map`], [`and`], [`and_then`], [`filter`], [`flatten`], [`unzip`], [`transpose`], `copied`, `cloned` | A `Null` or `Absent` receiver keeps its state; only `Some` looks at the closure or the argument. |
 //! | First `Some` wins | [`or`], [`or_else`] | `self` if it is `Some`, otherwise the alternative, whatever its state. |
 //! | `Absent` over `Null` over `Some` | [`zip`], [`zip_with`], `collect`, `sum`, `product` | `Absent` if any input is `Absent`, otherwise `Null` if any is `Null`, otherwise `Some`. The state of the result does not depend on the order of the inputs. |
+//! | Last non-`Absent` wins | [`merge`] | `later` unless it is `Absent`, in which case `self`; composes PATCH requests. |
 //! | `xor` | [`xor`] | The `Some` side if exactly one side is `Some`; `Null` if both are `Null`; otherwise `Absent`, including for two `Some`s. |
 //!
 //! So `Null.and(Absent)` is `Null` and `Null.or(Absent)` is `Absent`, while
@@ -177,7 +178,45 @@
 //! [`zip`]: Presence::zip
 //! [`zip_with`]: Presence::zip_with
 //! [`xor`]: Presence::xor
+//! [`merge`]: Presence::merge
 //! [`take_if`]: Presence::take_if
+//!
+//! # Patching
+//!
+//! In a PATCH request a field left out means "leave it alone", an explicit `null` means
+//! "clear it", and a value means "set it". [`apply_to`] applies a presence to an
+//! `Option` field of your model with exactly those semantics:
+//!
+//! ```
+//! use presence_rs::Presence;
+//!
+//! struct User {
+//!     email: Option<String>,
+//!     phone: Option<String>,
+//! }
+//!
+//! struct UserPatch {
+//!     email: Presence<String>,
+//!     phone: Presence<String>,
+//! }
+//!
+//! let mut user = User {
+//!     email: Some("old@example.com".to_string()),
+//!     phone: Some("555-0100".to_string()),
+//! };
+//! let patch = UserPatch {
+//!     email: Presence::Some("new@example.com".to_string()),
+//!     phone: Presence::Null,
+//! };
+//!
+//! patch.email.apply_to(&mut user.email);
+//! patch.phone.apply_to(&mut user.phone);
+//!
+//! assert_eq!(user.email.as_deref(), Some("new@example.com"));
+//! assert_eq!(user.phone, None);
+//! ```
+//!
+//! [`apply_to`]: Presence::apply_to
 //!
 //! # Cardinality
 //!
@@ -549,6 +588,44 @@ impl<T> Presence<T> {
             Presence::Some(value) => value,
             Presence::Null => null_default,
             Presence::Absent => absent_default,
+        }
+    }
+
+    /// Applies this presence to an `Option` field as a PATCH would, returning what it
+    /// replaced.
+    ///
+    /// - `Absent` leaves `target` unchanged and returns `None`.
+    /// - `Null` clears `target` and returns its previous value, like [`Option::take`].
+    /// - `Some(value)` sets `target` to `Some(value)` and returns its previous value, like
+    ///   [`Option::replace`].
+    ///
+    /// A `None` return therefore means either that nothing changed or that `target` was
+    /// already `None`. See [Patching](self#patching).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let mut nickname = Some(String::from("neo"));
+    ///
+    /// assert_eq!(Presence::Absent.apply_to(&mut nickname), None);
+    /// assert_eq!(nickname.as_deref(), Some("neo"));
+    ///
+    /// let previous = Presence::Some(String::from("trinity")).apply_to(&mut nickname);
+    /// assert_eq!(previous.as_deref(), Some("neo"));
+    /// assert_eq!(nickname.as_deref(), Some("trinity"));
+    ///
+    /// let previous = Presence::Null.apply_to(&mut nickname);
+    /// assert_eq!(previous.as_deref(), Some("trinity"));
+    /// assert_eq!(nickname, None);
+    /// ```
+    #[inline]
+    pub fn apply_to(self, target: &mut Option<T>) -> Option<T> {
+        match self {
+            Presence::Absent => None,
+            Presence::Null => target.take(),
+            Presence::Some(value) => target.replace(value),
         }
     }
 
@@ -1864,6 +1941,44 @@ impl<T> Presence<T> {
         match self {
             Presence::Some(_) => self,
             Presence::Null | Presence::Absent => f(),
+        }
+    }
+
+    /// Composes two patches: returns `later`, unless it is [`Absent`], in which case
+    /// returns `self`.
+    ///
+    /// State rule: [last non-`Absent` wins](self#combining-states). Applying
+    /// `earlier.merge(later)` with [`apply_to`](Presence::apply_to) leaves the target in
+    /// the same state as applying `earlier` and then `later`, so a series of PATCH
+    /// requests can be folded into one (the value `apply_to` returns can differ). `Absent`
+    /// changes nothing on either side, and `merge` is associative.
+    ///
+    /// [`Absent`]: Presence::Absent
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let set = Presence::Some(1);
+    /// let clear: Presence<i32> = Presence::Null;
+    /// let keep: Presence<i32> = Presence::Absent;
+    ///
+    /// assert_eq!(set.merge(clear), Presence::Null);
+    /// assert_eq!(clear.merge(set), Presence::Some(1));
+    /// assert_eq!(set.merge(keep), Presence::Some(1));
+    ///
+    /// let folded = [set, keep, clear, Presence::Some(3), keep]
+    ///     .into_iter()
+    ///     .fold(Presence::Absent, Presence::merge);
+    /// assert_eq!(folded, Presence::Some(3));
+    /// ```
+    #[inline]
+    #[must_use = "Returns the composed patch"]
+    pub fn merge(self, later: Presence<T>) -> Presence<T> {
+        match later {
+            Presence::Absent => self,
+            later => later,
         }
     }
 

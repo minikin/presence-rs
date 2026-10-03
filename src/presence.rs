@@ -114,7 +114,7 @@
 //! ```
 //! use presence_rs::Presence;
 //!
-//! // Collecting - short-circuits on Absent or Null
+//! // Collecting - stops at the first Absent; after a Null it still reads on, looking for an Absent
 //! let values = vec![Presence::Some(1), Presence::Some(2), Presence::Some(3)];
 //! let result: Presence<Vec<i32>> = values.into_iter().collect();
 //! assert_eq!(result, Presence::Some(vec![1, 2, 3]));
@@ -2878,6 +2878,10 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// is always built — from the values before the first `Null` or `Absent`, possibly
     /// none of them — and then discarded if the result is `Null` or `Absent`.
     ///
+    /// Reading stops at the first `Absent`. After a `Null` the rest of the input is still
+    /// read, because a later `Absent` decides the result, so an endless iterator that never
+    /// yields `Absent` never finishes.
+    ///
     /// # Examples
     ///
     /// ```
@@ -2926,6 +2930,10 @@ where
     /// As with `Option`, an overflow among them panics in debug builds even though the
     /// result would be `Null` or `Absent`.
     ///
+    /// Reading stops at the first `Absent`. After a `Null` the rest of the input is still
+    /// read, because a later `Absent` decides the result, so an endless iterator that never
+    /// yields `Absent` never finishes.
+    ///
     /// # Examples
     ///
     /// ```
@@ -2969,6 +2977,10 @@ where
     /// before a `Null` or `Absent` are still combined before the result is discarded.
     /// As with `Option`, an overflow among them panics in debug builds even though the
     /// result would be `Null` or `Absent`.
+    ///
+    /// Reading stops at the first `Absent`. After a `Null` the rest of the input is still
+    /// read, because a later `Absent` decides the result, so an endless iterator that never
+    /// yields `Absent` never finishes.
     ///
     /// # Examples
     ///

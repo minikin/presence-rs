@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Presence::is_nullish_or`, `true` for `Null` and `Absent` or when the value matches the predicate
 - `no_std` support: the crate is `#![no_std]` and needs no allocator, with or without the `serde` feature
 - `From<&Presence<T>> for Presence<&T>` and `From<&mut Presence<T>> for Presence<&mut T>`, as `Option` has, so a borrowed presence can be passed where `impl Into<Presence<&T>>` (or `&mut T`) is expected
+- `Presence::apply_to`, which applies a presence to an `Option` field as a PATCH would (`Absent` leaves it, `Null` clears it, `Some` sets it) and returns the value it replaced
+- `Presence::merge`, which composes two patches: the later one wins unless it is `Absent`, so a series of PATCH requests folds into one
 
 ### Changed
 - The published crate contains only the library source, README, LICENSE and CHANGELOG; repository tooling, specs and tests are no longer packaged

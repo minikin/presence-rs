@@ -764,3 +764,108 @@ fn converting_a_mutably_borrowed_presence_allows_changing_the_value() {
         assert_eq!(other, original);
     }
 }
+
+// Spec 06 — patching
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn an_absent_patch_leaves_the_target_unchanged(target in any::<Option<i32>>()) {
+        // Given any target of type Option<i32>
+        let mut patched = target;
+
+        // When Presence::Absent is applied to it
+        let previous = Presence::<i32>::Absent.apply_to(&mut patched);
+
+        // Then the target is unchanged
+        prop_assert_eq!(patched, target);
+        // And apply_to returns None
+        prop_assert_eq!(previous, None);
+    }
+
+    #[test]
+    fn a_null_patch_clears_the_target_and_returns_what_it_held(target in any::<Option<i32>>()) {
+        // Given any target of type Option<i32>
+        let mut patched = target;
+
+        // When Presence::Null is applied to it
+        let previous = Presence::<i32>::Null.apply_to(&mut patched);
+
+        // Then the target is None
+        prop_assert_eq!(patched, None);
+        // And apply_to returns the target's previous value
+        prop_assert_eq!(previous, target);
+    }
+
+    #[test]
+    fn a_some_patch_sets_the_target_and_returns_what_it_held(
+        target in any::<Option<i32>>(),
+        v in any::<i32>(),
+    ) {
+        // Given any target of type Option<i32> and any value v
+        let mut patched = target;
+
+        // When Presence::Some(v) is applied to it
+        let previous = Presence::Some(v).apply_to(&mut patched);
+
+        // Then the target is Some(v)
+        prop_assert_eq!(patched, Some(v));
+        // And apply_to returns the target's previous value
+        prop_assert_eq!(previous, target);
+    }
+}
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn merge_keeps_the_later_patch_unless_it_is_absent(
+        earlier in any_presence(),
+        later in any_presence(),
+    ) {
+        // Given any presences earlier and later
+        // When earlier.merge(later) is evaluated
+        let composed = earlier.merge(later);
+
+        // Then the result is earlier if later is Absent
+        // And otherwise the result is later
+        let expected = if later.is_absent() { earlier } else { later };
+        prop_assert_eq!(composed, expected);
+    }
+
+    #[test]
+    fn applying_a_composed_patch_equals_applying_the_patches_in_order(
+        target in any::<Option<i32>>(),
+        a in any_presence(),
+        b in any_presence(),
+    ) {
+        // Given any target of type Option<i32> and any presences a and b
+        let mut composed = target;
+        let mut in_order = target;
+
+        // When a.merge(b) is applied to one copy of the target
+        let _ = a.merge(b).apply_to(&mut composed);
+        // And a and then b are applied, one after the other, to another copy
+        let _ = a.apply_to(&mut in_order);
+        let _ = b.apply_to(&mut in_order);
+
+        // Then both copies end up equal
+        prop_assert_eq!(composed, in_order);
+    }
+
+    #[test]
+    fn composing_patches_is_associative_and_absent_changes_nothing(
+        a in any_presence(),
+        b in any_presence(),
+        c in any_presence(),
+    ) {
+        // Given any presences a, b and c
+        // When they are composed with merge
+        // Then a.merge(b).merge(c) equals a.merge(b.merge(c))
+        prop_assert_eq!(a.merge(b).merge(c), a.merge(b.merge(c)));
+        // And Absent.merge(a) and a.merge(Absent) both equal a
+        prop_assert_eq!(Presence::Absent.merge(a), a);
+        prop_assert_eq!(a.merge(Presence::Absent), a);
+    }
+}

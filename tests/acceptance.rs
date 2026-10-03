@@ -701,3 +701,66 @@ fn values_before_a_null_are_combined_as_they_arrive() {
     // Then the sum panics with an overflow, as Option's Sum does
     let _: Presence<i32> = items.into_iter().sum();
 }
+
+// Spec 05 — From references
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn converting_a_borrowed_presence_gives_a_presence_of_a_reference(p in any_presence()) {
+        // Given any presence p
+        let original = p;
+
+        // When Presence::from(&p) is evaluated
+        let converted = Presence::from(&p);
+
+        // Then the result equals p.as_ref()
+        prop_assert_eq!(converted, p.as_ref());
+        // And p is still usable afterwards and unchanged
+        prop_assert_eq!(p, original);
+    }
+}
+
+#[test]
+fn a_borrowed_presence_is_accepted_where_into_presence_of_a_reference_is_required() {
+    // Given a function generic over `impl Into<Presence<&i32>>` that reports the state it
+    // receives
+    fn received<'a>(presence: impl Into<Presence<&'a i32>>) -> Presence<&'a i32> {
+        presence.into()
+    }
+
+    // When it is called with `&Presence::Some(7)`, `&Presence::<i32>::Null` and
+    // `&Presence::<i32>::Absent`
+    let some = Presence::Some(7);
+    let null = Presence::<i32>::Null;
+    let absent = Presence::<i32>::Absent;
+
+    // Then it receives Some(&7), Null and Absent respectively
+    assert_eq!(received(&some), Presence::Some(&7));
+    assert_eq!(received(&null), Presence::Null);
+    assert_eq!(received(&absent), Presence::Absent);
+}
+
+#[test]
+fn converting_a_mutably_borrowed_presence_allows_changing_the_value() {
+    // Given a mutable Presence::Some(41)
+    let mut presence = Presence::Some(41);
+
+    // When it is converted with Presence::from(&mut presence) and the value is
+    // incremented through it
+    let borrowed: Presence<&mut i32> = Presence::from(&mut presence);
+    if let Presence::Some(value) = borrowed {
+        *value += 1;
+    }
+
+    // Then the presence afterwards equals Presence::Some(42)
+    assert_eq!(presence, Presence::Some(42));
+    // And converting a mutable Null or Absent the same way leaves it unchanged
+    for original in [Presence::<i32>::Null, Presence::Absent] {
+        let mut other = original;
+        let borrowed: Presence<&mut i32> = (&mut other).into();
+        assert_eq!(state(&borrowed), state(&original));
+        assert_eq!(other, original);
+    }
+}

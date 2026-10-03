@@ -92,7 +92,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-presence-rs = "0.2.0"
+presence-rs = "0.3.0"
 ```
 
 ## Examples
@@ -190,7 +190,7 @@ Enable the `serde` feature. The example below also uses `serde` and `serde_json`
 
 ```toml
 [dependencies]
-presence-rs = { version = "0.2.0", features = ["serde"] }
+presence-rs = { version = "0.3.0", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```

@@ -54,7 +54,10 @@ Decisions (settled in the spec interview):
    enabling it (for example, deriving for `String` with its own `serde`
    pulled in without `std`). The CHANGELOG says so under `Changed`, with
    the fix: enable serde's `std` or `alloc` feature yourself. *(Corrected
-   after review, with the user's permission.)*
+   after review, with the user's permission.)* *(Amended before the 0.3.0
+   release, with the user's approval: `derive` is dropped too, since the
+   impls are hand-written; the CHANGELOG tells affected crates to enable it
+   themselves.)*
 4. **Proof:**
    - a CI job builds the library for a `no_std` target
      (`thumbv7em-none-eabihf`), both without features and with `serde`;

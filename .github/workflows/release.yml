@@ -14,10 +14,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          # The ancestry check below needs main's history.
+          fetch-depth: 0
+
+      - name: Check the tagged commit is on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag ${GITHUB_REF_NAME} points at a commit that is not on main" >&2
+            exit 1
+          fi
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
+          targets: thumbv7em-none-eabihf
 
       - name: Check the tag matches the crate version
         run: |
@@ -33,6 +47,17 @@ jobs:
       - name: Verify package
         run: cargo package --all-features
 
+      - name: Build without std
+        run: |
+          cargo build --lib --target thumbv7em-none-eabihf --no-default-features
+          cargo build --lib --target thumbv7em-none-eabihf --features serde
+
+      # Keep in sync with `rust-version` in Cargo.toml.
+      - name: Check the minimum supported Rust version
+        run: |
+          rustup toolchain install 1.85 --profile minimal
+          cargo +1.85 check --lib --all-features
+
   publish-crate:
     name: Publish to crates.io
     needs: verify
@@ -41,10 +66,12 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
 
       # Trusted publishing: a short-lived token from crates.io via OIDC, so no
       # long-lived registry secret is stored in the repository.
@@ -65,10 +92,10 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Create release
-        uses: softprops/action-gh-release@v2.5.0
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           generate_release_notes: true
           draft: false

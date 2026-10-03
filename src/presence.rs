@@ -2115,11 +2115,7 @@ impl<T> Presence<T> {
     where
         F: FnOnce(T, U) -> R,
     {
-        match (self, other) {
-            (Presence::Some(a), Presence::Some(b)) => Presence::Some(f(a, b)),
-            (Presence::Absent, _) | (_, Presence::Absent) => Presence::Absent,
-            (Presence::Null, _) | (_, Presence::Null) => Presence::Null,
-        }
+        self.zip(other).map(|(a, b)| f(a, b))
     }
 
     /// Combines `self` and another `Presence` with function `f`; the same as

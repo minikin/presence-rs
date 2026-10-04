@@ -869,3 +869,130 @@ proptest! {
         prop_assert_eq!(a.merge(Presence::Absent), a);
     }
 }
+
+// Spec 07: unwrap_or_absent_or_null
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn unwrap_or_absent_or_null_returns_the_value_of_some(
+        v in any::<i32>(),
+        a in any::<i32>(),
+        n in any::<i32>(),
+    ) {
+        // Given Presence::Some(v) and any defaults a and n
+        let presence = Presence::Some(v);
+
+        // When unwrap_or_absent_or_null(a, n) is called
+        let result = presence.unwrap_or_absent_or_null(a, n);
+
+        // Then the result is v
+        prop_assert_eq!(result, v);
+    }
+
+    #[test]
+    fn unwrap_or_absent_or_null_returns_the_first_argument_for_absent(
+        a in any::<i32>(),
+        n in any::<i32>(),
+    ) {
+        // Given Presence::<i32>::Absent and any defaults a and n
+        let presence = Presence::<i32>::Absent;
+
+        // When unwrap_or_absent_or_null(a, n) is called
+        let result = presence.unwrap_or_absent_or_null(a, n);
+
+        // Then the result is a
+        prop_assert_eq!(result, a);
+    }
+
+    #[test]
+    fn unwrap_or_absent_or_null_returns_the_second_argument_for_null(
+        a in any::<i32>(),
+        n in any::<i32>(),
+    ) {
+        // Given Presence::<i32>::Null and any defaults a and n
+        let presence = Presence::<i32>::Null;
+
+        // When unwrap_or_absent_or_null(a, n) is called
+        let result = presence.unwrap_or_absent_or_null(a, n);
+
+        // Then the result is n
+        prop_assert_eq!(result, n);
+    }
+}
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    fn the_lazy_form_returns_what_the_eager_form_returns(
+        p in any_presence(),
+        a in any::<i32>(),
+        n in any::<i32>(),
+    ) {
+        // Given any Presence<i32> p and any defaults a and n
+        // When unwrap_or_else_absent_or_null(|| a, || n) is called on p
+        let lazy = p.unwrap_or_else_absent_or_null(|| a, || n);
+
+        // Then the result equals p.unwrap_or_absent_or_null(a, n)
+        prop_assert_eq!(lazy, p.unwrap_or_absent_or_null(a, n));
+    }
+}
+
+#[test]
+fn the_lazy_form_calls_at_most_the_closure_for_the_state_it_meets() {
+    // Given a Presence<i32> in each of the states Some, Null and Absent
+    let cases = [
+        (Presence::Some(7), 0, 0),
+        (Presence::Absent, 1, 0),
+        (Presence::Null, 0, 1),
+    ];
+
+    for (presence, expected_absent_calls, expected_null_calls) in cases {
+        let mut absent_calls = 0;
+        let mut null_calls = 0;
+
+        // When unwrap_or_else_absent_or_null is called with two closures that count their calls
+        let _ = presence.unwrap_or_else_absent_or_null(
+            || {
+                absent_calls += 1;
+                -1
+            },
+            || {
+                null_calls += 1;
+                -2
+            },
+        );
+
+        // Then for Some neither closure is called
+        // And for Absent only the first closure is called, exactly once
+        // And for Null only the second closure is called, exactly once
+        assert_eq!(
+            (absent_calls, null_calls),
+            (expected_absent_calls, expected_null_calls),
+            "closure calls for {presence:?}"
+        );
+    }
+}
+
+proptest! {
+    #![proptest_config(persisted_config())]
+
+    #[test]
+    #[expect(deprecated, reason = "this scenario pins the deprecated name to its replacement")]
+    fn the_deprecated_name_behaves_exactly_like_its_replacement(
+        p in any_presence(),
+        a in any::<i32>(),
+        n in any::<i32>(),
+    ) {
+        // Given any Presence<i32> p and any defaults a and n
+        // When p.unwrap_or_null_default(a, n) is called
+        let old = p.unwrap_or_null_default(a, n);
+
+        // Then the result equals p.unwrap_or_absent_or_null(a, n)
+        // And calling unwrap_or_null_default raises a deprecation warning, which the
+        // `expect(deprecated)` above requires
+        prop_assert_eq!(old, p.unwrap_or_absent_or_null(a, n));
+    }
+}

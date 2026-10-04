@@ -223,15 +223,15 @@ fn test_unwrap_or_default() {
 }
 
 #[test]
-fn test_unwrap_or_null_default() {
+fn test_unwrap_or_absent_or_null() {
     let some = Presence::Some(42);
-    assert_eq!(some.unwrap_or_null_default(10, 20), 42);
+    assert_eq!(some.unwrap_or_absent_or_null(10, 20), 42);
 
     let null: Presence<i32> = Presence::Null;
-    assert_eq!(null.unwrap_or_null_default(10, 20), 20);
+    assert_eq!(null.unwrap_or_absent_or_null(10, 20), 20);
 
     let absent: Presence<i32> = Presence::Absent;
-    assert_eq!(absent.unwrap_or_null_default(10, 20), 10);
+    assert_eq!(absent.unwrap_or_absent_or_null(10, 20), 10);
 }
 
 #[test]

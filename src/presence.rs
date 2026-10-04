@@ -142,8 +142,8 @@
 //! assert!(!absent.is_defined());  // false - field doesn't exist
 //!
 //! // Different defaults for null vs absent
-//! assert_eq!(null.unwrap_or_null_default(1, 2), 2);    // null_default
-//! assert_eq!(absent.unwrap_or_null_default(1, 2), 1);  // absent_default
+//! assert_eq!(null.unwrap_or_absent_or_null(1, 2), 2);
+//! assert_eq!(absent.unwrap_or_absent_or_null(1, 2), 1);
 //! ```
 //!
 //! # Combining states
@@ -558,36 +558,92 @@ impl<T> Presence<T> {
     // Cardinality-aware operations
     /////////////////////////////////////////////////////////////////////////
 
-    /// Returns the contained [`Some`] value or a provided default,
-    /// with different defaults for [`Null`] and [`Absent`].
-    ///
-    /// This is useful when you need to handle the two "empty" states differently,
-    /// such as in IPLD schemas where null and absent have distinct meanings.
+    /// Returns the contained [`Some`] value, `absent_default` for [`Absent`] or
+    /// `null_default` for [`Null`].
     ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
+    #[deprecated(
+        since = "0.3.0",
+        note = "renamed to `unwrap_or_absent_or_null`, which takes the `Absent` default first"
+    )]
+    #[inline]
+    pub fn unwrap_or_null_default(self, absent_default: T, null_default: T) -> T {
+        self.unwrap_or_absent_or_null(absent_default, null_default)
+    }
+
+    /// Returns the contained [`Some`] value, `absent` for [`Absent`] or `null` for
+    /// [`Null`].
+    ///
+    /// This is useful when you need to handle the two "empty" states differently,
+    /// such as in IPLD schemas where null and absent have distinct meanings.
+    ///
+    /// The defaults are taken in the order the name gives them, `Absent` first, as in
+    /// the ordering `Absent < Null < Some(_)`. Arguments passed to
+    /// `unwrap_or_absent_or_null` are eagerly evaluated. If you are passing the result
+    /// of a function call, it is recommended to use [`unwrap_or_else_absent_or_null`],
+    /// which is lazily evaluated.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`unwrap_or_else_absent_or_null`]: Presence::unwrap_or_else_absent_or_null
     ///
     /// # Examples
     ///
     /// ```
     /// use presence_rs::Presence;
     ///
-    /// let x = Presence::Some(42);
-    /// assert_eq!(x.unwrap_or_null_default(-1, -2), 42);
-    ///
-    /// let y: Presence<i32> = Presence::Null;
-    /// assert_eq!(y.unwrap_or_null_default(-1, -2), -2);  // null_default
-    ///
-    /// let z: Presence<i32> = Presence::Absent;
-    /// assert_eq!(z.unwrap_or_null_default(-1, -2), -1);  // absent_default
+    /// assert_eq!(Presence::Some(42).unwrap_or_absent_or_null(-1, -2), 42);
+    /// assert_eq!(Presence::<i32>::Absent.unwrap_or_absent_or_null(-1, -2), -1);
+    /// assert_eq!(Presence::<i32>::Null.unwrap_or_absent_or_null(-1, -2), -2);
     /// ```
     #[inline]
-    pub fn unwrap_or_null_default(self, absent_default: T, null_default: T) -> T {
+    #[must_use = "if you don't need the returned value, use `if let` or `match` instead"]
+    pub fn unwrap_or_absent_or_null(self, absent: T, null: T) -> T {
         match self {
             Presence::Some(value) => value,
-            Presence::Null => null_default,
-            Presence::Absent => absent_default,
+            Presence::Null => null,
+            Presence::Absent => absent,
+        }
+    }
+
+    /// Returns the contained [`Some`] value, or computes it from `absent` for [`Absent`]
+    /// or from `null` for [`Null`].
+    ///
+    /// Only the closure for the state met is called, and neither is called for `Some`.
+    /// This is the lazy form of [`unwrap_or_absent_or_null`], and takes the closures in
+    /// the same order, `Absent` first.
+    ///
+    /// [`Some`]: Presence::Some
+    /// [`Null`]: Presence::Null
+    /// [`Absent`]: Presence::Absent
+    /// [`unwrap_or_absent_or_null`]: Presence::unwrap_or_absent_or_null
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use presence_rs::Presence;
+    ///
+    /// let absent = || -1;
+    /// let null = || -2;
+    ///
+    /// assert_eq!(Presence::Some(42).unwrap_or_else_absent_or_null(absent, null), 42);
+    /// assert_eq!(Presence::Absent.unwrap_or_else_absent_or_null(absent, null), -1);
+    /// assert_eq!(Presence::Null.unwrap_or_else_absent_or_null(absent, null), -2);
+    /// ```
+    #[inline]
+    #[must_use = "if you don't need the returned value, use `if let` or `match` instead"]
+    pub fn unwrap_or_else_absent_or_null<FA, FN>(self, absent: FA, null: FN) -> T
+    where
+        FA: FnOnce() -> T,
+        FN: FnOnce() -> T,
+    {
+        match self {
+            Presence::Some(value) => value,
+            Presence::Null => null(),
+            Presence::Absent => absent(),
         }
     }
 
@@ -3249,6 +3305,17 @@ mod tests {
     }
 
     proptest! {
+        #[test]
+        fn unwrap_or_absent_or_null_with_one_default_is_unwrap_or(
+            presence in any_presence(),
+            default in any::<i32>(),
+        ) {
+            prop_assert_eq!(
+                presence.unwrap_or_absent_or_null(default, default),
+                presence.unwrap_or(default)
+            );
+        }
+
         #[test]
         fn reference_iteration_matches_iter_and_iter_mut(presence in any_presence()) {
             let expected_len = usize::from(presence.is_present());

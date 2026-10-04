@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `From<&Presence<T>> for Presence<&T>` and `From<&mut Presence<T>> for Presence<&mut T>`, as `Option` has, so a borrowed presence can be passed where `impl Into<Presence<&T>>` (or `&mut T`) is expected
 - `Presence::apply_to`, which applies a presence to an `Option` field as a PATCH would (`Absent` leaves it, `Null` clears it, `Some` sets it) and returns the value it replaced
 - `Presence::merge`, which composes two patches: the later one wins unless it is `Absent`, so a series of PATCH requests folds into one
+- `Presence::unwrap_or_absent_or_null(absent, null)`, which returns the value of `Some`, `absent` for `Absent` or `null` for `Null`. The name gives the order of the defaults
+- `Presence::unwrap_or_else_absent_or_null(absent, null)`, the lazy form of `unwrap_or_absent_or_null`, which calls only the closure for the state it meets
 
 ### Changed
 - The published crate contains only the library source, README, LICENSE and CHANGELOG; repository tooling, specs and tests are no longer packaged
@@ -29,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Presence::is_null_or`, renamed to `is_nullish_or` because it is also `true` for `Absent`
 - `Presence::to_nested_option`, the same as `to_nullable`
 - `Presence::reduce`, the same as `zip_with`
+- `Presence::unwrap_or_null_default`, renamed to `unwrap_or_absent_or_null`. Its name mentions only `null` while its first argument is the `Absent` default, so the two defaults were easy to swap. The arguments keep their order
 
 ### Documentation
 - Document the serde round-trip rule where users see it: the crate docs, the `Presence` type docs and the README now explain that a struct field needs both `#[serde(default)]` and `#[serde(skip_serializing_if = "Presence::is_absent")]`; without `default`, a missing field deserializes as `Null`

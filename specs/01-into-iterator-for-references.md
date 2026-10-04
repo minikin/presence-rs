@@ -1,6 +1,6 @@
 # Spec 01 — `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`
 
-**Status:** Approved
+**Status:** Implemented
 **Effort:** Small
 **Module:** `src/presence.rs`
 

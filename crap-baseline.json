@@ -5,7 +5,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IntoIter::len",
-      "line": 2382,
+      "line": 2549,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -14,7 +14,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IntoIter::next",
-      "line": 2356,
+      "line": 2523,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -23,7 +23,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IntoIter::next_back",
-      "line": 2372,
+      "line": 2539,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -32,7 +32,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IntoIter::size_hint",
-      "line": 2364,
+      "line": 2531,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -41,7 +41,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Iter::len",
-      "line": 2435,
+      "line": 2602,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -50,7 +50,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Iter::next",
-      "line": 2416,
+      "line": 2583,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -59,7 +59,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Iter::next_back",
-      "line": 2428,
+      "line": 2595,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -68,7 +68,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Iter::size_hint",
-      "line": 2421,
+      "line": 2588,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -77,7 +77,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IterMut::len",
-      "line": 2489,
+      "line": 2656,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -86,7 +86,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IterMut::next",
-      "line": 2470,
+      "line": 2637,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -95,7 +95,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IterMut::next_back",
-      "line": 2482,
+      "line": 2649,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -104,7 +104,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "IterMut::size_hint",
-      "line": 2475,
+      "line": 2642,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -113,7 +113,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Option::from",
-      "line": 2988,
+      "line": 3226,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -122,7 +122,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::and",
-      "line": 1711,
+      "line": 1844,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -131,7 +131,16 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::and_then",
-      "line": 1745,
+      "line": 1878,
+      "cyclomatic": 4.0,
+      "coverage": 100.0,
+      "crap": 4.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::apply_to",
+      "line": 680,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -140,7 +149,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_deref",
-      "line": 879,
+      "line": 1012,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -149,7 +158,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_deref_mut",
-      "line": 916,
+      "line": 1049,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -158,7 +167,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_mut",
-      "line": 709,
+      "line": 842,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -167,7 +176,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_mut_slice",
-      "line": 850,
+      "line": 983,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -176,7 +185,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_pin_mut",
-      "line": 781,
+      "line": 914,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -185,7 +194,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_pin_ref",
-      "line": 742,
+      "line": 875,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -194,7 +203,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_ref",
-      "line": 677,
+      "line": 810,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -203,7 +212,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::as_slice",
-      "line": 816,
+      "line": 949,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -212,7 +221,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::cloned",
-      "line": 2558,
+      "line": 2725,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -221,7 +230,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::cloned",
-      "line": 2632,
+      "line": 2799,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -230,7 +239,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::copied",
-      "line": 2524,
+      "line": 2691,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -239,7 +248,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::copied",
-      "line": 2598,
+      "line": 2765,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -248,7 +257,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::default",
-      "line": 2211,
+      "line": 2378,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -257,7 +266,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::expect",
-      "line": 973,
+      "line": 1106,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -266,7 +275,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::filter",
-      "line": 1785,
+      "line": 1918,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -275,7 +284,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::flatten",
-      "line": 2687,
+      "line": 2854,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -284,7 +293,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::fmt",
-      "line": 2188,
+      "line": 2355,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -293,7 +302,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::from",
-      "line": 2924,
+      "line": 3103,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -302,7 +311,25 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::from",
-      "line": 2954,
+      "line": 3133,
+      "cyclomatic": 1.0,
+      "coverage": 100.0,
+      "crap": 1.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::from",
+      "line": 3162,
+      "cyclomatic": 1.0,
+      "coverage": 100.0,
+      "crap": 1.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::from",
+      "line": 3192,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -311,7 +338,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::from_iter",
-      "line": 2791,
+      "line": 2962,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -320,7 +347,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::from_nullable",
-      "line": 510,
+      "line": 549,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -329,7 +356,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::from_optional",
-      "line": 475,
+      "line": 514,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -338,7 +365,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::get_or_insert",
-      "line": 1288,
+      "line": 1421,
       "cyclomatic": 4.0,
       "coverage": 87.5,
       "crap": 4.03125,
@@ -347,7 +374,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::get_or_insert_default",
-      "line": 1319,
+      "line": 1452,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -356,7 +383,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::get_or_insert_with",
-      "line": 1347,
+      "line": 1480,
       "cyclomatic": 4.0,
       "coverage": 90.0,
       "crap": 4.016,
@@ -365,7 +392,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::insert",
-      "line": 1252,
+      "line": 1385,
       "cyclomatic": 3.0,
       "coverage": 83.33333333333334,
       "crap": 3.0416666666666665,
@@ -374,7 +401,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::inspect",
-      "line": 1480,
+      "line": 1613,
       "cyclomatic": 2.0,
       "coverage": 100.0,
       "crap": 2.0,
@@ -383,7 +410,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::into_iter",
-      "line": 2244,
+      "line": 2411,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -392,7 +419,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_absent",
-      "line": 280,
+      "line": 319,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -401,7 +428,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_absent_or",
-      "line": 606,
+      "line": 739,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -410,7 +437,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_defined",
-      "line": 358,
+      "line": 397,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -419,7 +446,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_empty",
-      "line": 1411,
+      "line": 1544,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -428,7 +455,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_null",
-      "line": 303,
+      "line": 342,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -437,7 +464,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_null_or",
-      "line": 653,
+      "line": 786,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -446,7 +473,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_nullish",
-      "line": 386,
+      "line": 425,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -455,7 +482,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_nullish_or",
-      "line": 639,
+      "line": 772,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -464,7 +491,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_present",
-      "line": 326,
+      "line": 365,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -473,7 +500,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::is_some_and",
-      "line": 577,
+      "line": 710,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -482,7 +509,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::iter",
-      "line": 2085,
+      "line": 2252,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -491,7 +518,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::iter_mut",
-      "line": 2119,
+      "line": 2286,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -500,7 +527,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::len",
-      "line": 1384,
+      "line": 1517,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -509,7 +536,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::map",
-      "line": 1444,
+      "line": 1577,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -518,7 +545,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::map_or",
-      "line": 1518,
+      "line": 1651,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -527,7 +554,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::map_or_default",
-      "line": 1583,
+      "line": 1716,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -536,7 +563,16 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::map_or_else",
-      "line": 1551,
+      "line": 1684,
+      "cyclomatic": 3.0,
+      "coverage": 100.0,
+      "crap": 3.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::merge",
+      "line": 2034,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -545,7 +581,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::ok_or",
-      "line": 1631,
+      "line": 1764,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -554,7 +590,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::ok_or_else",
-      "line": 1666,
+      "line": 1799,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -563,7 +599,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::or",
-      "line": 1833,
+      "line": 1966,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -572,7 +608,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::or_else",
-      "line": 1860,
+      "line": 1993,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -581,7 +617,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::product",
-      "line": 2839,
+      "line": 3014,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -590,7 +626,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::reduce",
-      "line": 2014,
+      "line": 2181,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -599,7 +635,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::replace",
-      "line": 1222,
+      "line": 1355,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -608,7 +644,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::sum",
-      "line": 2883,
+      "line": 3062,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -617,7 +653,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::take",
-      "line": 1150,
+      "line": 1283,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -626,7 +662,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::take_if",
-      "line": 1186,
+      "line": 1319,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -635,7 +671,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::to_nested_option",
-      "line": 931,
+      "line": 1064,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -644,7 +680,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::to_nullable",
-      "line": 449,
+      "line": 488,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -653,7 +689,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::to_optional",
-      "line": 413,
+      "line": 452,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -662,7 +698,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::transpose",
-      "line": 2176,
+      "line": 2343,
       "cyclomatic": 5.0,
       "coverage": 100.0,
       "crap": 5.0,
@@ -671,7 +707,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::unwrap",
-      "line": 1023,
+      "line": 1156,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -680,7 +716,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::unwrap_or",
-      "line": 1056,
+      "line": 1189,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -688,8 +724,17 @@
     },
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::unwrap_or_absent_or_null",
+      "line": 604,
+      "cyclomatic": 4.0,
+      "coverage": 100.0,
+      "crap": 4.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::unwrap_or_default",
-      "line": 1120,
+      "line": 1253,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -698,7 +743,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::unwrap_or_else",
-      "line": 1083,
+      "line": 1216,
       "cyclomatic": 3.0,
       "coverage": 100.0,
       "crap": 3.0,
@@ -706,8 +751,8 @@
     },
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
-      "function": "Presence::unwrap_or_null_default",
-      "line": 547,
+      "function": "Presence::unwrap_or_else_absent_or_null",
+      "line": 638,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -715,8 +760,17 @@
     },
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
+      "function": "Presence::unwrap_or_null_default",
+      "line": 572,
+      "cyclomatic": 1.0,
+      "coverage": 100.0,
+      "crap": 1.0,
+      "crate": "presence-rs"
+    },
+    {
+      "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::unzip",
-      "line": 2042,
+      "line": 2209,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -725,7 +779,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::xor",
-      "line": 1907,
+      "line": 2078,
       "cyclomatic": 5.0,
       "coverage": 100.0,
       "crap": 5.0,
@@ -734,7 +788,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::zip",
-      "line": 1953,
+      "line": 2124,
       "cyclomatic": 4.0,
       "coverage": 100.0,
       "crap": 4.0,
@@ -743,16 +797,16 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Presence::zip_with",
-      "line": 1999,
-      "cyclomatic": 4.0,
+      "line": 2170,
+      "cyclomatic": 1.0,
       "coverage": 100.0,
-      "crap": 4.0,
+      "crap": 1.0,
       "crate": "presence-rs"
     },
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "Values::next",
-      "line": 2742,
+      "line": 2909,
       "cyclomatic": 5.0,
       "coverage": 100.0,
       "crap": 5.0,
@@ -761,7 +815,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "into_iter",
-      "line": 2280,
+      "line": 2447,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -770,7 +824,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "into_iter",
-      "line": 2316,
+      "line": 2483,
       "cyclomatic": 1.0,
       "coverage": 100.0,
       "crap": 1.0,
@@ -779,7 +833,7 @@
     {
       "file": "/Users/mnkn/GitHub/presence-rs/src/presence.rs",
       "function": "stream",
-      "line": 2707,
+      "line": 2874,
       "cyclomatic": 6.0,
       "coverage": 100.0,
       "crap": 6.0,

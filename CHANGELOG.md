@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-10-03
+## [0.3.0] - 2026-10-04
 
 ### Added
 - `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`, so `for x in &presence` and `for x in &mut presence` work as they do for `Option`

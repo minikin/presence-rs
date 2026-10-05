@@ -124,6 +124,9 @@ jobs:
       - name: Build library for a no_std target (serde)
         run: cargo build --lib --target thumbv7em-none-eabihf --features serde
 
+      - name: Build library for a no_std target (schemars)
+        run: cargo build --lib --target thumbv7em-none-eabihf --features schemars
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest

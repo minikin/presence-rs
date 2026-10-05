@@ -37,7 +37,8 @@
 //!
 //! See the [`mod@presence`] module for detailed documentation and examples.
 //!
-//! The crate is `#![no_std]` and needs no allocator, with or without the `serde` feature.
+//! The crate is `#![no_std]`. It needs no allocator, with or without the `serde` feature.
+//! The `schemars` feature needs `alloc`.
 //!
 //! # Serde
 //!
@@ -79,6 +80,12 @@
 //! # }
 //! ```
 //!
+//! # JSON Schema
+//!
+//! With the `schemars` feature, `Presence<T>` implements `schemars::JsonSchema` with the
+//! schema of an `Option<T>`: a `T` or `null`. The two serde attributes above also decide
+//! the schema: with both, schemars does not list the field in `required`.
+//!
 //! [`Presence<T>`]: presence::Presence
 
 #![no_std]
@@ -89,6 +96,9 @@ pub use presence::Presence;
 
 #[cfg(feature = "serde")]
 mod serde;
+
+#[cfg(feature = "schemars")]
+mod schemars;
 
 /// Convenience macro for creating [`Presence`] values.
 ///

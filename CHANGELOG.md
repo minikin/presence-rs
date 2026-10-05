@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A `schemars` feature: `Presence<T>` implements `schemars::JsonSchema` (schemars 1.x) with the schema of an `Option<T>`, a `T` or `null`. A field with the documented `#[serde(default, skip_serializing_if = "Presence::is_absent")]` is not required in the generated schema. The feature needs `alloc`
+
+### Changed
+- The `serde` feature requires serde 1.0.194 or later (January 2024), the oldest serde that resolves together with the `schemars` feature's dependencies
+
+### Documentation
+- A "JSON Schema and OpenAPI" README section: the schemars feature, why the two serde attributes matter for the schema, and how to describe a `Presence<T>` field to utoipa with `#[schema(value_type = Option<T>)]`
+
 ## [0.3.0] - 2026-10-03
 
 ### Added

@@ -132,3 +132,22 @@ fn library_source_never_uses_the_alloc_crate() {
         );
     }
 }
+
+#[test]
+fn the_default_build_still_uses_no_allocator() {
+    // Given the library source files compiled without the schemars feature
+    let lib = include_str!("../src/lib.rs");
+    let schemars = include_str!("../src/schemars.rs");
+
+    // When they are scanned for the alloc crate
+    // Then none of them uses it: `library_source_never_uses_the_alloc_crate` covers
+    // every default-build file, and the only module that does use it compiles only with
+    // the schemars feature
+    let lines: Vec<&str> = lib.lines().collect();
+    assert!(
+        lines
+            .windows(2)
+            .any(|pair| pair == ["#[cfg(feature = \"schemars\")]", "mod schemars;"])
+    );
+    assert!(schemars.contains("extern crate alloc;"));
+}

@@ -110,10 +110,10 @@ fn test_as_slice() {
     assert_eq!(some.as_slice(), &[42]);
 
     let null: Presence<i32> = Presence::Null;
-    assert_eq!(null.as_slice(), &[]);
+    assert_eq!(null.as_slice(), &[0_i32; 0]);
 
     let absent: Presence<i32> = Presence::Absent;
-    assert_eq!(absent.as_slice(), &[]);
+    assert_eq!(absent.as_slice(), &[0_i32; 0]);
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_as_mut_slice() {
     assert_eq!(some, Presence::Some(100));
 
     let mut null: Presence<i32> = Presence::Null;
-    assert_eq!(null.as_mut_slice(), &mut []);
+    assert_eq!(null.as_mut_slice(), &mut [0_i32; 0]);
 }
 
 #[test]

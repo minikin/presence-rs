@@ -21,6 +21,7 @@
     - [Basic Usage](#basic-usage)
     - [Practical Example: API Update Request](#practical-example-api-update-request)
   - [Serde](#serde)
+  - [JSON Schema and OpenAPI](#json-schema-and-openapi)
   - [Use Cases](#use-cases)
   - [Contributing](#contributing)
   - [License](#license)
@@ -29,7 +30,7 @@
 
 `Presence<T>` extends the traditional `Option<T>` two-state model (Some/None)
 with an additional distinction between "absent" and "null". The crate is
-`#![no_std]` and needs no allocator.
+`#![no_std]` and, with default features, needs no allocator.
 This is particularly useful when working with serialization formats like JSON
 where the following states are semantically different:
 
@@ -222,6 +223,62 @@ assert_eq!(cleared.nickname, Presence::Null);
 assert_eq!(untouched.nickname, Presence::Absent);
 
 assert_eq!(serde_json::to_string(&untouched).unwrap(), "{}");
+```
+
+## JSON Schema and OpenAPI
+
+With the `schemars` feature, `Presence<T>` implements `schemars::JsonSchema`
+(schemars 1.x) with the schema of an `Option<T>`: a `T` or `null`. The two serde
+attributes from [Serde](#serde) also drive the schema: with both, the field is not
+listed in `required`. The feature needs `alloc`.
+
+```toml
+[dependencies]
+presence-rs = { version = "0.3.0", features = ["serde", "schemars"] }
+schemars = "1"
+```
+
+```rust
+use presence_rs::Presence;
+use schemars::{JsonSchema, schema_for};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+struct Patch {
+    #[serde(default, skip_serializing_if = "Presence::is_absent")]
+    nickname: Presence<String>,
+}
+
+let schema = serde_json::to_value(schema_for!(Patch)).unwrap();
+assert_eq!(schema["properties"]["nickname"], json!({"type": ["string", "null"]}));
+assert!(schema.get("required").is_none());
+```
+
+Without `#[serde(default)]`, schemars lists the field as required. Without
+`skip_serializing_if`, it adds `"default": null` to the property, which reads as
+"a missing field means `null`", the opposite of `Absent`.
+
+utoipa has no `Presence` support. Describe a `Presence<T>` field to it as an
+`Option<T>` with `#[schema(value_type = Option<T>)]`. Together with the two serde
+attributes, the field is nullable and not required:
+
+```rust
+use presence_rs::Presence;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use utoipa::{PartialSchema, ToSchema};
+
+#[derive(Serialize, Deserialize, ToSchema)]
+struct Patch {
+    #[serde(default, skip_serializing_if = "Presence::is_absent")]
+    #[schema(value_type = Option<String>)]
+    nickname: Presence<String>,
+}
+
+let schema = serde_json::to_value(Patch::schema()).unwrap();
+assert_eq!(schema["properties"]["nickname"], json!({"type": ["string", "null"]}));
+assert!(schema.get("required").is_none());
 ```
 
 ## Use Cases

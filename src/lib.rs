@@ -134,6 +134,20 @@ mod schemars;
 /// let owned = presence!("hello".to_string());
 /// assert_eq!(owned, presence::Presence::Some("hello".to_string()));
 /// ```
+///
+/// # A variable named `null`
+///
+/// `presence!(null)` matches the token `null`, so it is always `Null`, even when a
+/// variable named `null` is in scope. Wrap the variable in parentheses to pass its
+/// value:
+///
+/// ```
+/// use presence_rs::presence;
+///
+/// let null = 5;
+/// assert_eq!(presence!(null), presence::Presence::<i32>::Null);
+/// assert_eq!(presence!((null)), presence::Presence::Some(5));
+/// ```
 #[macro_export]
 macro_rules! presence {
     () => {

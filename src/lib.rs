@@ -43,7 +43,7 @@
 //! # Serde
 //!
 //! With the `serde` feature, `Presence<T>` implements `Serialize` and `Deserialize`.
-//! `Some(value)` is written as the value; `Null` and `Absent` are both written as `null`.
+//! `Some(value)` is written as the value, and `Null` and `Absent` are both written as `null`.
 //! When read back, a value becomes `Some` and `null` becomes `Null`.
 //!
 //! A struct field keeps all three states apart only when it has **both** attributes:

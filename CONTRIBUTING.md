@@ -1,187 +1,102 @@
-# Contributing to Presence-RS
+# Contributing to presence-rs
 
-Thank you for your interest in contributing to Presence-RS!
-This document provides guidelines and instructions for contributing.
+presence-rs is small, and it holds every change to the same bar: tests
+written first, every scenario of a feature pinned by a test, no function
+over a CRAP score of 10, and no surviving mutant on a changed line. This
+page is what you need to get a pull request through that.
 
-- [Contributing to Presence-RS](#contributing-to-presence-rs)
-  - [Development Setup](#development-setup)
-  - [Building and Testing](#building-and-testing)
-    - [Run all tests](#run-all-tests)
-    - [Run specific test suites](#run-specific-test-suites)
-    - [Check code formatting](#check-code-formatting)
-    - [Run linter](#run-linter)
-    - [Build documentation](#build-documentation)
-  - [Making Changes](#making-changes)
-    - [Code Style](#code-style)
-    - [Testing](#testing)
-    - [Documentation](#documentation)
-  - [Pull Request Process](#pull-request-process)
-    - [PR Requirements](#pr-requirements)
-  - [Feature Flags](#feature-flags)
-  - [Commit Message Format](#commit-message-format)
-  - [Release Process](#release-process)
-  - [Getting Help](#getting-help)
-  - [Code of Conduct](#code-of-conduct)
-  - [License](#license)
+The repository has no issue tracker. Send a pull request, even for a
+question or an idea.
 
-## Development Setup
+## Which kind of change is yours
 
-**Note:** This project uses Rust edition 2024.
+**A bug fix.** Write the failing test first, then the smallest change that
+makes it pass.
 
-1. Clone the repository:
+**A new feature or a change in behaviour.** It starts as a spec in
+`specs/`: a short context section and Given/When/Then scenarios, one per
+observable behaviour. Take the next number, follow the shape of the specs
+already there, and open the spec as its own pull request. Implementation
+starts once the maintainer approves it, and from then on the spec is the
+acceptance criteria. A spec changes only with the maintainer's approval.
+
+**Docs, comments, anything with no change in behaviour.** Send the pull
+request. If a test fails because of it, it changed behaviour after all.
+
+## Setup
+
+Rust stable. The minimum supported version is 1.85, and CI checks it.
+
 ```bash
-git clone https://github.com/minikin/presence-rs.git
-cd presence-rs
-   ```
-2. Install development dependencies:
-   ```bash
-   rustup component add rustfmt clippy
-   ```
+rustup component add rustfmt clippy
+```
 
-## Building and Testing
+The coverage, CRAP and mutation gates use
+[Keeler](https://github.com/minikin/keeler)'s recipes. To run them locally,
+install `just`, `cargo-nextest`, `cargo-llvm-cov`, `cargo-mutants` and
+`cargo-crap`, and put Keeler's `bin/keeler` on your `PATH`.
 
-### Run all tests
+## Before you push
+
 ```bash
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-features
 ```
 
-### Run specific test suites
-```bash
-# Run only integration tests
-cargo test --tests --all-features
+With Keeler installed, `keeler dev` runs all of that plus coverage and the
+CRAP gate, and `keeler mutants-diff main` mutation-tests the lines you
+changed. A surviving mutant means a test would still pass with that line
+broken. Fix it with the test that catches it, never by reshaping the code
+until the mutant goes away.
 
-# Run only unit tests
-cargo test --lib
+CI runs the same gates and adds:
 
-# Run a specific test file
-cargo test --test basic_tests
-```
+- the tests on Linux, macOS and Windows, on stable and beta, and on nightly
+  on Linux
+- a check on Rust 1.85, and builds for a `no_std` target with each feature
+- the tests under Miri
+- a build against the lowest dependency versions `Cargo.toml` allows
+- `cargo-semver-checks` against the latest release
+- a docs build as docs.rs runs it
+- `cargo audit`
+- a CRAP comparison against `crap-baseline.json`, which fails when any
+  function's score went up
 
-### Check code formatting
-```bash
-cargo fmt --all -- --check
-```
+## Tests
 
-### Run linter
-```bash
-cargo clippy --all-targets --all-features -- -D warnings
-```
+- Unit tests sit in a `#[cfg(test)]` block next to the code. When the code
+  has an invariant (ordering, round-trip, precedence), add a `proptest`
+  property beside the examples. If proptest finds a counterexample it
+  writes a file under `proptest-regressions/`: commit it.
+- `tests/acceptance.rs` holds one test per spec scenario, named after the
+  scenario, with Given/When/Then comments.
+- Every public item has a doc comment with an example, and the README's
+  code blocks run as doctests.
 
-### Build documentation
-```bash
-cargo doc --all-features --no-deps --open
-```
+## Features
 
-## Making Changes
+`serde` and `schemars` are optional. The default build and the `serde`
+feature must stay `no_std` without an allocator, and `tests/allocation.rs`
+checks that. Code that needs `alloc` goes in a module behind its feature,
+as `src/schemars.rs` does.
 
-### Code Style
+## Commits and pull requests
 
-- Follow Rust's official [style guidelines](https://doc.rust-lang.org/1.0.0/style/)
-- Run `cargo fmt` before committing
-- Ensure `cargo clippy` produces no warnings
-- Write clear, descriptive commit messages
+Conventional Commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`,
+`ci:` or `chore:`, then a lowercase summary of what changed. The body says
+what changed and why, in a few sentences of prose. A pull request
+description does the same: the problem, then the change and how it was
+verified.
 
-### Testing
+## Releases
 
-- Add tests for all new functionality
-- Ensure all existing tests pass
-- Integration tests go in the `tests/` directory
-- Unit tests go in the same file as the code they test
+The maintainer bumps the version in `Cargo.toml`, dates the CHANGELOG
+entry, merges, and pushes a `vX.Y.Z` tag on `main`. The release workflow
+checks the tag against the crate version, runs the tests and the `no_std`
+and MSRV builds, and publishes to crates.io through trusted publishing.
 
-### Documentation
+## Code of conduct
 
-- Document all public APIs with doc comments
-- Include examples in doc comments where appropriate
-- Update README.md if adding major features
-
-## Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Add tests for your changes
-5. Run the full test suite: `cargo test --all-features`
-6. Run formatting and linting:
-   ```bash
-   cargo fmt --all
-   cargo clippy --all-targets --all-features -- -D warnings
-   ```
-7. Commit your changes with a descriptive message
-8. Push to your fork
-9. Open a Pull Request against the `main` branch
-
-### PR Requirements
-
-- All CI checks must pass
-- Code must be formatted with `rustfmt`
-- No `clippy` warnings
-- All tests must pass on Linux, macOS, and Windows
-- Code coverage should not decrease
-- Documentation is updated if needed
-
-## Feature Flags
-
-The project uses feature flags for optional functionality:
-
-- `serde`: Serialization/deserialization support
-
-When adding new features:
-- Make them optional via feature flags when appropriate
-- Test with and without the feature enabled
-- Document the feature in README.md
-
-## Commit Message Format
-
-Use conventional commits format:
-
-```
-type(scope): subject
-
-body
-
-footer
-```
-
-Types:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `test`: Adding or updating tests
-- `refactor`: Code refactoring
-- `perf`: Performance improvements
-- `chore`: Maintenance tasks
-
-Examples:
-```
-feat(core): add new is_nullish method
-fix(serde): correct deserialization of absent fields
-docs(readme): update usage examples
-test(conversion): add tests for from_nullable
-```
-
-## Release Process
-
-Releases are managed by maintainers:
-
-1. Update version in `Cargo.toml`
-2. Update CHANGELOG.md
-3. Create a git tag: `git tag -a v0.x.y -m "Release v0.x.y"`
-4. Push tag: `git push origin v0.x.y`
-5. GitHub Actions will automatically publish to crates.io
-
-## Getting Help
-
-- **Found a bug or have a feature request?** Please submit a Pull Request directly.
-The Issues tab is not available on this repository as we don't have the capacity to manage incoming issues at this time.
-- For questions or ideas, feel free to open a PR with your proposed changes or improvements.
-
-## Code of Conduct
-
-- Be respectful and inclusive
-- Provide constructive feedback
-- Focus on the code, not the person
-- Help create a welcoming environment for all contributors
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) applies to everyone who takes
+part.

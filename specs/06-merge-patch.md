@@ -1,4 +1,4 @@
-# Spec 06 — Applying and composing patches
+# Spec 06: Applying and composing patches
 
 **Status:** Implemented
 **Effort:** Small
@@ -111,13 +111,13 @@ And   Absent.merge(a) and a.merge(Absent) both equal a
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
-- [x] **T1 — Apply a patch to an `Option` field.** Scenarios: _An Absent patch leaves the target unchanged; A Null patch clears the target and returns what it held; A Some patch sets the target and returns what it held_. Tests: acceptance + property (each case for any target), plus a doctest. Adds `apply_to`, the `# Patching` module docs section, and the CHANGELOG `Added` entry.
-- [x] **T2 — Compose patches with `merge`.** Needs: T1. Scenarios: _merge keeps the later patch unless it is Absent; Applying a composed patch equals applying the patches in order; Composing patches is associative and Absent changes nothing_. Tests: acceptance + property (identity, associativity, agreement with sequential `apply_to`), plus a doctest. Adds `merge`, its row in the "Combining states" table, and extends the CHANGELOG entry.
-- [x] **T3 — Rewrite the README's Practical Example around `apply_to`.** Needs: T1. Scenarios: _none (documentation; it runs as a doctest through `ReadmeDoctests`)_. Tests: the README doctest.
+- [x] **T1 - Apply a patch to an `Option` field.** Scenarios: _An Absent patch leaves the target unchanged; A Null patch clears the target and returns what it held; A Some patch sets the target and returns what it held_. Tests: acceptance + property (each case for any target), plus a doctest. Adds `apply_to`, the `# Patching` module docs section, and the CHANGELOG `Added` entry.
+- [x] **T2 - Compose patches with `merge`.** Needs: T1. Scenarios: _merge keeps the later patch unless it is Absent; Applying a composed patch equals applying the patches in order; Composing patches is associative and Absent changes nothing_. Tests: acceptance + property (identity, associativity, agreement with sequential `apply_to`), plus a doctest. Adds `merge`, its row in the "Combining states" table, and extends the CHANGELOG entry.
+- [x] **T3 - Rewrite the README's Practical Example around `apply_to`.** Needs: T1. Scenarios: _none (documentation; it runs as a doctest through `ReadmeDoctests`)_. Tests: the README doctest.
 
 ---
 
@@ -135,7 +135,7 @@ are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
   - a `# Patching` section showing a request struct applied to a model;
   - the README's "Practical Example" rewritten to use `apply_to`. It runs
     as a doctest via `ReadmeDoctests`.
-- **Tests:** in `tests/acceptance.rs` under `// Spec 06 — patching`, using
+- **Tests:** in `tests/acceptance.rs` under `// Spec 06: patching`, using
   `any_presence()` and an `any::<Option<i32>>()` target.
 
 ### Invariants worth a property test

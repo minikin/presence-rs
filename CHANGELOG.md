@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- Document that `presence!(null)` is always `Null`, even with a variable named `null` in scope, and that `presence!((null))` passes the variable
+- The README compares `Presence` with `Option<Option<T>>` plus `serde_with::rust::double_option` and states the minimum supported Rust version
+
 ## [0.3.0] - 2026-10-03
 
 ### Added

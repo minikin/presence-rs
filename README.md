@@ -9,7 +9,7 @@
 > in schemas and data structures.
 
 > [!TIP]
-> If you what to read more about the motivation behind this crate, check out
+> If you want to read more about the motivation behind this crate, check out
 > [Stop Losing Intent: Absent, Null, and Value in Rust](https://minikin.me/blog/presence-rs)
 
 - [Presence](#presence)
@@ -86,6 +86,15 @@ match value {
 }
 ```
 
+With serde, `Option<Option<T>>` also needs
+[`serde_with::rust::double_option`](https://docs.rs/serde_with/latest/serde_with/rust/double_option/index.html)
+to tell `null` from a missing field: every such field carries
+`#[serde(default, skip_serializing_if = "Option::is_none", with = "::serde_with::rust::double_option")]`.
+`Presence` implements `Serialize` and `Deserialize` itself, so a field needs only
+`default` and `skip_serializing_if` (see [Serde](#serde)). Code that already uses
+`Option<Option<T>>` converts with `From` in both directions: `None` is `Absent`,
+`Some(None)` is `Null` and `Some(Some(v))` is `Some(v)`.
+
 ## Usage
 
 Add this to your `Cargo.toml`:
@@ -94,6 +103,8 @@ Add this to your `Cargo.toml`:
 [dependencies]
 presence-rs = "0.3.0"
 ```
+
+The minimum supported Rust version is 1.85.
 
 ## Examples
 

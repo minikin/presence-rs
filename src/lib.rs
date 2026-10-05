@@ -89,6 +89,7 @@
 //! [`Presence<T>`]: presence::Presence
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod presence;
 pub use presence::Presence;

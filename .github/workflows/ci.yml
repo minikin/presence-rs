@@ -145,6 +145,81 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
+  # Builds the docs the way docs.rs does, so a nightly change to `doc_cfg` shows
+  # up here before it breaks the published page.
+  docs-rs:
+    name: docs.rs build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build documentation as docs.rs does
+        run: cargo doc --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: --cfg docsrs -D warnings
+
+  miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # Miri is slow, so the property tests run 8 cases instead of 256. Isolation
+      # is off because proptest reads its regression files from disk.
+      - name: Run tests under Miri
+        run: |
+          cargo miri setup
+          cargo miri test --all-features --lib --tests
+        env:
+          PROPTEST_CASES: 8
+          MIRIFLAGS: -Zmiri-disable-isolation
+
+  minimal-versions:
+    name: Minimal dependency versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      # Only the library is checked: the dev-dependencies do not build at their
+      # minimal versions, and users never build them.
+      - name: Check the library against the lowest allowed versions
+        run: |
+          cargo update -Z direct-minimal-versions
+          cargo check --lib --all-features
+
+  semver:
+    name: Semver
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check for breaking changes against the latest release
+        uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
+        with:
+          feature-group: all-features
+
   security:
     name: Security Audit
     runs-on: ubuntu-latest

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - A "JSON Schema and OpenAPI" README section: the schemars feature, why the two serde attributes matter for the schema, and how to describe a `Presence<T>` field to utoipa with `#[schema(value_type = Option<T>)]`
+- docs.rs marks items that need a feature, such as the `Serialize` and `Deserialize` impls, with "Available on crate feature `serde` only"
 
 ## [0.3.0] - 2026-10-03
 

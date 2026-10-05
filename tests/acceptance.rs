@@ -152,7 +152,14 @@ fn iterating_a_mutably_borrowed_null_or_absent_yields_nothing_and_leaves_the_sta
 #[test]
 fn the_clippy_suppression_is_no_longer_needed() {
     // Given the crate with both impls in place
-    let source = include_str!("../src/presence.rs");
+    let source = concat!(
+        include_str!("../src/presence/mod.rs"),
+        include_str!("../src/presence/convert.rs"),
+        include_str!("../src/presence/iter.rs"),
+        include_str!("../src/presence/query.rs"),
+        include_str!("../src/presence/refs.rs"),
+        include_str!("../src/presence/transform.rs"),
+    );
 
     // When its source is searched for the `iter_without_into_iter` expectation
     let suppressions = source.matches("iter_without_into_iter").count();

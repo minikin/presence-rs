@@ -122,7 +122,30 @@ fn library_source_never_uses_the_alloc_crate() {
     // no_std CI build, because that target ships `alloc`; scan the library source instead.
     for (file, source) in [
         ("src/lib.rs", include_str!("../src/lib.rs")),
-        ("src/presence.rs", include_str!("../src/presence.rs")),
+        (
+            "src/presence/mod.rs",
+            include_str!("../src/presence/mod.rs"),
+        ),
+        (
+            "src/presence/convert.rs",
+            include_str!("../src/presence/convert.rs"),
+        ),
+        (
+            "src/presence/iter.rs",
+            include_str!("../src/presence/iter.rs"),
+        ),
+        (
+            "src/presence/query.rs",
+            include_str!("../src/presence/query.rs"),
+        ),
+        (
+            "src/presence/refs.rs",
+            include_str!("../src/presence/refs.rs"),
+        ),
+        (
+            "src/presence/transform.rs",
+            include_str!("../src/presence/transform.rs"),
+        ),
         ("src/serde.rs", include_str!("../src/serde.rs")),
     ] {
         let library_code = source.split("#[cfg(test)]").next().unwrap_or(source);

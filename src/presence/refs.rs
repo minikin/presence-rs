@@ -154,10 +154,10 @@ impl<T> Presence<T> {
     /// assert_eq!(x.as_slice(), &[42]);
     ///
     /// let y: Presence<i32> = Presence::Null;
-    /// assert_eq!(y.as_slice(), &[]);
+    /// assert!(y.as_slice().is_empty());
     ///
     /// let z: Presence<i32> = Presence::Absent;
-    /// assert_eq!(z.as_slice(), &[]);
+    /// assert!(z.as_slice().is_empty());
     /// ```
     #[inline]
     pub const fn as_slice(&self) -> &[T] {
@@ -188,10 +188,10 @@ impl<T> Presence<T> {
     /// assert_eq!(x, Presence::Some(100));
     ///
     /// let mut y: Presence<i32> = Presence::Null;
-    /// assert_eq!(y.as_mut_slice(), &mut []);
+    /// assert!(y.as_mut_slice().is_empty());
     ///
     /// let mut z: Presence<i32> = Presence::Absent;
-    /// assert_eq!(z.as_mut_slice(), &mut []);
+    /// assert!(z.as_mut_slice().is_empty());
     /// ```
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {

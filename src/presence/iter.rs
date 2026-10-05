@@ -93,11 +93,11 @@ impl<T> IntoIterator for Presence<T> {
     ///
     /// let y: Presence<i32> = Presence::Null;
     /// let v: Vec<_> = y.into_iter().collect();
-    /// assert_eq!(v, vec![]);
+    /// assert!(v.is_empty());
     ///
     /// let z: Presence<i32> = Presence::Absent;
     /// let v: Vec<_> = z.into_iter().collect();
-    /// assert_eq!(v, vec![]);
+    /// assert!(v.is_empty());
     /// ```
     fn into_iter(self) -> Self::IntoIter {
         IntoIter { presence: self }

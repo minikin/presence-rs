@@ -1,6 +1,6 @@
 # Spec 08: JSON Schema through `schemars`
 
-**Status:** Approved
+**Status:** Implemented
 **Effort:** Small
 **Module:** `src/schemars.rs`, `src/lib.rs`, `Cargo.toml`, `README.md`, `tests/schemars_tests.rs`, `.github/workflows/ci.yml`, `CHANGELOG.md`
 

@@ -7,19 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- A `schemars` feature: `Presence<T>` implements `schemars::JsonSchema` (schemars 1.x) with the schema of an `Option<T>`, a `T` or `null`. A field with the documented `#[serde(default, skip_serializing_if = "Presence::is_absent")]` is not required in the generated schema. The feature needs `alloc`
-
-### Changed
-- The `serde` feature requires serde 1.0.194 or later (January 2024), the oldest serde that resolves together with the `schemars` feature's dependencies
-
-### Documentation
-- A "JSON Schema and OpenAPI" README section: the schemars feature, why the two serde attributes matter for the schema, and how to describe a `Presence<T>` field to utoipa with `#[schema(value_type = Option<T>)]`
-- docs.rs marks items that need a feature, such as the `Serialize` and `Deserialize` impls, with "Available on crate feature `serde` only"
-- Document that `presence!(null)` is always `Null`, even with a variable named `null` in scope, and that `presence!((null))` passes the variable
-- The README compares `Presence` with `Option<Option<T>>` plus `serde_with::rust::double_option` and states the minimum supported Rust version
-
-## [0.3.0] - 2026-10-03
+## [0.3.0] - 2026-10-05
 
 ### Added
 - `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`, so `for x in &presence` and `for x in &mut presence` work as they do for `Option`
@@ -31,12 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Presence::merge`, which composes two patches: the later one wins unless it is `Absent`, so a series of PATCH requests folds into one
 - `Presence::unwrap_or_absent_or_null(absent, null)`, which returns the value of `Some`, `absent` for `Absent` or `null` for `Null`. The name gives the order of the defaults
 - `Presence::unwrap_or_else_absent_or_null(absent, null)`, the lazy form of `unwrap_or_absent_or_null`, which calls only the closure for the state it meets
+- A `schemars` feature: `Presence<T>` implements `schemars::JsonSchema` (schemars 1.x) with the schema of an `Option<T>`, a `T` or `null`. A field with the documented `#[serde(default, skip_serializing_if = "Presence::is_absent")]` is not required in the generated schema. The feature needs `alloc`
 
 ### Changed
 - The published crate contains only the library source, README, LICENSE and CHANGELOG; repository tooling, specs and tests are no longer packaged
 - The `serde` feature now depends on `serde` with `default-features = false` and without `derive` (the impls are written by hand), so it no longer turns on `serde`'s `std` or `derive` features for you. If your crate relied on that — deriving `Serialize`/`Deserialize`, or for types like `String` — enable `serde`'s `derive` and `std` (or `alloc`) features in your own `Cargo.toml`
 - With the new `From<&Presence<T>>` and `From<&mut Presence<T>>` impls, `Presence::from(&p)` or `(&p).into()` can no longer infer its target type; code that relied on getting `Presence<&Presence<T>>` that way must name the type, as with `Option`
 - `collect`, `sum` and `product` over presences stream their values instead of copying them into a temporary `Vec`, so `sum`, `product` and collecting into a type that does not allocate perform no allocation. The target is always built from the values before the first `Null` or `Absent` (possibly none) and then discarded if the result is `Null` or `Absent`. Values before the first `Null` or `Absent` are now combined as they arrive, as with `Option`: an overflow among them panics in debug builds even though the result is `Null` or `Absent`
+- The `serde` feature requires serde 1.0.194 or later (January 2024), the oldest serde that resolves together with the `schemars` feature's dependencies
 
 ### Deprecated
 - `presence::Item`, renamed to `presence::IntoIter`
@@ -53,7 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document that `zip`, `zip_with`, `collect`, `sum` and `product` give `Absent` precedence over `Null` and `Null` over `Some`, and fix the `zip` and `zip_with` docs, which claimed `Null` only when both sides are `Null`
 - Document the `xor` rule, and why a `filter` that rejects a value, an `xor` of two `Some`s and a `take_if` that takes nothing return `Absent`
 - Guarantee the ordering `Absent < Null < Some(_)` (with `Some` values compared by contents), and note that converting `None` into a `Presence<Option<_>>` gives `Some(None)`
-
+- A "JSON Schema and OpenAPI" README section: the schemars feature, why the two serde attributes matter for the schema, and how to describe a `Presence<T>` field to utoipa with `#[schema(value_type = Option<T>)]`
+- docs.rs marks items that need a feature, such as the `Serialize` and `Deserialize` impls, with "Available on crate feature `serde` only"
+- Document that `presence!(null)` is always `Null`, even with a variable named `null` in scope, and that `presence!((null))` passes the variable
+- The README compares `Presence` with `Option<Option<T>>` plus `serde_with::rust::double_option` and states the minimum supported Rust version
 ## [0.2.0] - 2026-01-02
 
 ### Added

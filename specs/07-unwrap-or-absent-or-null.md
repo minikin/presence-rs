@@ -1,6 +1,6 @@
 # Spec 07: `unwrap_or_absent_or_null` and its lazy form
 
-**Status:** Approved
+**Status:** Implemented
 **Effort:** Small
 **Module:** `src/presence.rs`, `tests/acceptance.rs`, `CHANGELOG.md`
 

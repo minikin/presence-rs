@@ -122,7 +122,30 @@ fn library_source_never_uses_the_alloc_crate() {
     // no_std CI build, because that target ships `alloc`; scan the library source instead.
     for (file, source) in [
         ("src/lib.rs", include_str!("../src/lib.rs")),
-        ("src/presence.rs", include_str!("../src/presence.rs")),
+        (
+            "src/presence/mod.rs",
+            include_str!("../src/presence/mod.rs"),
+        ),
+        (
+            "src/presence/convert.rs",
+            include_str!("../src/presence/convert.rs"),
+        ),
+        (
+            "src/presence/iter.rs",
+            include_str!("../src/presence/iter.rs"),
+        ),
+        (
+            "src/presence/query.rs",
+            include_str!("../src/presence/query.rs"),
+        ),
+        (
+            "src/presence/refs.rs",
+            include_str!("../src/presence/refs.rs"),
+        ),
+        (
+            "src/presence/transform.rs",
+            include_str!("../src/presence/transform.rs"),
+        ),
         ("src/serde.rs", include_str!("../src/serde.rs")),
     ] {
         let library_code = source.split("#[cfg(test)]").next().unwrap_or(source);
@@ -131,4 +154,23 @@ fn library_source_never_uses_the_alloc_crate() {
             "{file} uses the alloc crate outside its tests"
         );
     }
+}
+
+#[test]
+fn the_default_build_still_uses_no_allocator() {
+    // Given the library source files compiled without the schemars feature
+    let lib = include_str!("../src/lib.rs");
+    let schemars = include_str!("../src/schemars.rs");
+
+    // When they are scanned for the alloc crate
+    // Then none of them uses it: `library_source_never_uses_the_alloc_crate` covers
+    // every default-build file, and the only module that does use it compiles only with
+    // the schemars feature
+    let lines: Vec<&str> = lib.lines().collect();
+    assert!(
+        lines
+            .windows(2)
+            .any(|pair| pair == ["#[cfg(feature = \"schemars\")]", "mod schemars;"])
+    );
+    assert!(schemars.contains("extern crate alloc;"));
 }

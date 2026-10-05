@@ -15,21 +15,28 @@ include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-serde = { version = "1.0", optional = true, default-features = false }
+serde = { version = "1.0.194", optional = true, default-features = false }
+schemars = { version = "1", optional = true, default-features = false }
 
 [dev-dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.127"
+serde = { version = "1.0.194", features = ["derive"] }
 proptest = "1.11.0"
-# Enables the `serde` feature for tests, so the Keeler gates (which build
-# without `--all-features`) test and measure `src/serde.rs`.
-presence-rs = { path = ".", features = ["serde"] }
+schemars = { version = "1", features = ["derive"] }
+# Runs the README's utoipa example. utoipa 6 needs Rust 1.88.
+utoipa = "5"
+# Enables the `serde` and `schemars` features for tests, so the Keeler gates
+# (which build without `--all-features`) test and measure `src/serde.rs` and
+# `src/schemars.rs`.
+presence-rs = { path = ".", features = ["serde", "schemars"] }
 
 [features]
 default = []
 serde = ["dep:serde"]
+schemars = ["dep:schemars"]
 
 [profile.mutants]
 inherits = "dev"

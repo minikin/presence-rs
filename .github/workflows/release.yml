@@ -51,6 +51,7 @@ jobs:
         run: |
           cargo build --lib --target thumbv7em-none-eabihf --no-default-features
           cargo build --lib --target thumbv7em-none-eabihf --features serde
+          cargo build --lib --target thumbv7em-none-eabihf --features schemars
 
       # Keep in sync with `rust-version` in Cargo.toml.
       - name: Check the minimum supported Rust version

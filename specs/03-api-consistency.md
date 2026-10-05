@@ -1,4 +1,4 @@
-# Spec 03 — API consistency: documented state rules, clearer names
+# Spec 03: API consistency: documented state rules, clearer names
 
 **Status:** Implemented
 **Effort:** Medium
@@ -207,20 +207,20 @@ Then  the result is Some(None), not Null or Absent
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
-Acceptance tests go in `tests/acceptance.rs` under a `// Spec 03 — <task name>`
+Acceptance tests go in `tests/acceptance.rs` under a `// Spec 03: <task name>`
 heading per task; each task adds its own CHANGELOG line under the matching
 `[Unreleased]` subsection.
 
-- [x] **T1 — Document and pin "self decides" and "first Some wins".** Scenarios: _A Null or Absent receiver passes through the self-decides combinators unchanged; and on Some returns the argument unchanged; or returns self when Some, otherwise the argument unchanged_. Tests: acceptance + property (a non-`Some` receiver's state survives `map`/`and`/`and_then`/`filter`/`flatten`; `Some(x).and(q) == q`; `p.or(q)` is `p` if `Some` else `q`). Creates the shared "any presence" proptest strategy in `tests/acceptance.rs`, and the `# Combining states` section in the `presence` module docs with the rule table; adds a one-line rule note to the doc of each method covered here.
-- [x] **T2 — Document and pin the Absent > Null > Some precedence.** Needs: T1. Scenarios: _zip gives Absent precedence over Null and Null over Some; collect, sum and product use the same precedence as zip_. Tests: acceptance + property (`zip` state is symmetric and equals the state of `collect` over `[p, q]`; `collect`/`sum`/`product` agree on state for any list). Fixes the wrong `zip` doc; adds rule notes to `zip`, `zip_with`, `FromIterator`, `Sum`, `Product` and their row in the T1 table.
-- [x] **T3 — Document and pin the Absent results of xor, filter and take_if.** Needs: T2. Scenarios: _xor returns the single Some, Null for two Nulls, and Absent otherwise; filter turns a failing Some into Absent; take_if that takes nothing returns Absent and leaves the presence unchanged_. Tests: acceptance + property (the `xor` table for any pair). Adds the "Absent means leave unchanged" rationale to the docs of the three methods and the `xor` row of the table.
-- [x] **T4 — Rename the owning iterator to `IntoIter`.** Scenarios: _into_iter returns presence::IntoIter_. Tests: acceptance. Renames `Item` to `IntoIter` in the iterator section of `src/presence.rs` and adds the deprecated `pub type Item<A> = IntoIter<A>;` alias.
-- [x] **T5 — Add `is_nullish_or` and deprecate the duplicate names.** Needs: T3, T4. Scenarios: _is_nullish_or is true for Null and Absent and tests the value of Some; Deprecated names still work and match their replacements_. Tests: acceptance + property (`is_nullish_or` truth table; each of `to_nested_option`, `reduce`, `is_null_or` equals its replacement; `Item<T>` is the type `into_iter` returns), plus a doctest on `is_nullish_or`. Turns `is_null_or`, `to_nested_option` and `reduce` into `#[deprecated(since = "0.3.0")]` wrappers and moves existing tests and doctests off the old names.
-- [x] **T6 — Guarantee the ordering and document the From<T> trap.** Needs: T1. Scenarios: _Presences are ordered Absent, then Null, then Some by value; Converting an Option into a Presence of Option wraps it_. Tests: acceptance + property (state order, and `T`'s order inside `Some`). Adds the `Ord` guarantee to the `Presence` type docs and the note to the `From<T>` impl doc.
-- [x] **T7 — Document the unsafe blocks and enforce it.** Scenarios: _none (enforced by clippy)_. Tests: none beyond the lint gate. Adds `// SAFETY:` comments in `as_pin_ref` and `as_pin_mut` and `undocumented_unsafe_blocks = "warn"` under `[lints.clippy]` in `Cargo.toml`.
+- [x] **T1 - Document and pin "self decides" and "first Some wins".** Scenarios: _A Null or Absent receiver passes through the self-decides combinators unchanged; and on Some returns the argument unchanged; or returns self when Some, otherwise the argument unchanged_. Tests: acceptance + property (a non-`Some` receiver's state survives `map`/`and`/`and_then`/`filter`/`flatten`; `Some(x).and(q) == q`; `p.or(q)` is `p` if `Some` else `q`). Creates the shared "any presence" proptest strategy in `tests/acceptance.rs`, and the `# Combining states` section in the `presence` module docs with the rule table; adds a one-line rule note to the doc of each method covered here.
+- [x] **T2 - Document and pin the Absent > Null > Some precedence.** Needs: T1. Scenarios: _zip gives Absent precedence over Null and Null over Some; collect, sum and product use the same precedence as zip_. Tests: acceptance + property (`zip` state is symmetric and equals the state of `collect` over `[p, q]`; `collect`/`sum`/`product` agree on state for any list). Fixes the wrong `zip` doc; adds rule notes to `zip`, `zip_with`, `FromIterator`, `Sum`, `Product` and their row in the T1 table.
+- [x] **T3 - Document and pin the Absent results of xor, filter and take_if.** Needs: T2. Scenarios: _xor returns the single Some, Null for two Nulls, and Absent otherwise; filter turns a failing Some into Absent; take_if that takes nothing returns Absent and leaves the presence unchanged_. Tests: acceptance + property (the `xor` table for any pair). Adds the "Absent means leave unchanged" rationale to the docs of the three methods and the `xor` row of the table.
+- [x] **T4 - Rename the owning iterator to `IntoIter`.** Scenarios: _into_iter returns presence::IntoIter_. Tests: acceptance. Renames `Item` to `IntoIter` in the iterator section of `src/presence.rs` and adds the deprecated `pub type Item<A> = IntoIter<A>;` alias.
+- [x] **T5 - Add `is_nullish_or` and deprecate the duplicate names.** Needs: T3, T4. Scenarios: _is_nullish_or is true for Null and Absent and tests the value of Some; Deprecated names still work and match their replacements_. Tests: acceptance + property (`is_nullish_or` truth table; each of `to_nested_option`, `reduce`, `is_null_or` equals its replacement; `Item<T>` is the type `into_iter` returns), plus a doctest on `is_nullish_or`. Turns `is_null_or`, `to_nested_option` and `reduce` into `#[deprecated(since = "0.3.0")]` wrappers and moves existing tests and doctests off the old names.
+- [x] **T6 - Guarantee the ordering and document the From<T> trap.** Needs: T1. Scenarios: _Presences are ordered Absent, then Null, then Some by value; Converting an Option into a Presence of Option wraps it_. Tests: acceptance + property (state order, and `T`'s order inside `Some`). Adds the `Ord` guarantee to the `Presence` type docs and the note to the `From<T>` impl doc.
+- [x] **T7 - Document the unsafe blocks and enforce it.** Scenarios: _none (enforced by clippy)_. Tests: none beyond the lint gate. Adds `// SAFETY:` comments in `as_pin_ref` and `as_pin_mut` and `undocumented_unsafe_blocks = "warn"` under `[lints.clippy]` in `Cargo.toml`.
 
 ---
 
@@ -258,7 +258,7 @@ heading per task; each task adds its own CHANGELOG line under the matching
 
 ### Tests
 
-- Acceptance tests go in `tests/acceptance.rs` under `// Spec 03 — …`
+- Acceptance tests go in `tests/acceptance.rs` under `// Spec 03: <task name>`
   headings, one per scenario. The property scenarios use `proptest` with
   the existing persistence configuration, and a shared strategy for "any
   presence" that also covers `Some(0)` and negative values.
@@ -266,7 +266,7 @@ heading per task; each task adds its own CHANGELOG line under the matching
 
 ### Invariants worth a property test
 
-- Self decides: if `p` is not `Some`, `op(p, …)` has `p`'s state.
+- Self decides: if `p` is not `Some`, `op(p, ...)` has `p`'s state.
 - `zip`'s state equals the state of `collect` over `[p, q]`. This ties the
   two definitions of the precedence rule together.
 - `zip` is symmetric in state.

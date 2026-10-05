@@ -1,4 +1,4 @@
-# Spec 04 — Allocation-free collect, sum and product; no_std
+# Spec 04: Allocation-free collect, sum and product; no_std
 
 **Status:** Implemented
 **Effort:** Medium
@@ -136,13 +136,13 @@ Then  both builds succeed
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
-- [x] **T1 — Stream collect, sum and product through one adapter.** Scenarios: _Streaming keeps the Absent over Null over Some result; Iteration stops at the first Absent and otherwise reads every element; A Null followed by an Absent still gives Absent; Values before a Null are combined as they arrive_. Tests: acceptance (in `tests/acceptance.rs` under `// Spec 04 — streaming`) + property (consumed count is first `Absent` + 1, else the full length; the result matches the precedence rule — the spec 03 property test must keep passing unchanged). Replaces the three `Vec` buffers in `src/presence.rs` with one private adapter; documents the overflow edge case on `Sum`/`Product`; CHANGELOG `Changed` entry.
-- [x] **T2 — Prove that streaming allocates nothing.** Needs: T1. Scenarios: _Summing and multiplying presences allocates nothing; Collecting into a non-allocating type allocates nothing_. Tests: acceptance in a new `tests/allocation.rs` binary with a counting `#[global_allocator]`.
-- [x] **T3 — Build without std.** Needs: T1. Scenarios: _The library builds without std_. Tests: a `no_std` CI job in `.github/workflows/ci.yml` building for `thumbv7em-none-eabihf` without features and with `serde`, run locally before pushing. Adds `#![no_std]` to `src/lib.rs`, moves `std::` paths to `core::`, sets the serde dependency to `default-features = false`, and adds the CHANGELOG `Added` entry.
+- [x] **T1 - Stream collect, sum and product through one adapter.** Scenarios: _Streaming keeps the Absent over Null over Some result; Iteration stops at the first Absent and otherwise reads every element; A Null followed by an Absent still gives Absent; Values before a Null are combined as they arrive_. Tests: acceptance (in `tests/acceptance.rs` under `// Spec 04: streaming`) + property (consumed count is first `Absent` + 1, else the full length; the result matches the precedence rule, and the spec 03 property test must keep passing unchanged). Replaces the three `Vec` buffers in `src/presence.rs` with one private adapter; documents the overflow edge case on `Sum`/`Product`; CHANGELOG `Changed` entry.
+- [x] **T2 - Prove that streaming allocates nothing.** Needs: T1. Scenarios: _Summing and multiplying presences allocates nothing; Collecting into a non-allocating type allocates nothing_. Tests: acceptance in a new `tests/allocation.rs` binary with a counting `#[global_allocator]`.
+- [x] **T3 - Build without std.** Needs: T1. Scenarios: _The library builds without std_. Tests: a `no_std` CI job in `.github/workflows/ci.yml` building for `thumbv7em-none-eabihf` without features and with `serde`, run locally before pushing. Adds `#![no_std]` to `src/lib.rs`, moves `std::` paths to `core::`, sets the serde dependency to `default-features = false`, and adds the CHANGELOG `Added` entry.
 
 ---
 
@@ -186,7 +186,7 @@ are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 - The result state follows `Absent` over `Null` over `Some`, and `Some`
   values match the buffered computation. The spec 03 test
   `collect_sum_and_product_use_the_same_precedence_as_zip` already pins
-  this, and the "Streaming keeps…" scenario owns it here; it must keep
+  this, and the "Streaming keeps the Absent over Null over Some result" scenario owns it here; it must keep
   passing unchanged.
 - The number of elements consumed is first `Absent` + 1, else the full
   length.

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- docs.rs marks items that need a feature, such as the `Serialize` and `Deserialize` impls, with "Available on crate feature `serde` only"
+
 ## [0.3.0] - 2026-10-03
 
 ### Added

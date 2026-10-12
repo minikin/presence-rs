@@ -1,4 +1,4 @@
-# Spec 02 — Serde round-trip: visible guidance and pinned behavior
+# Spec 02: Serde round-trip: visible guidance and pinned behavior
 
 **Status:** Implemented
 **Effort:** Small
@@ -10,8 +10,8 @@
 a field that is `null`, and a field with a value. With the `serde` feature
 that only holds when a struct field carries **both** attributes:
 
-- `#[serde(default)]` — a missing field deserializes as `Absent`;
-- `#[serde(skip_serializing_if = "Presence::is_absent")]` — `Absent` is
+- `#[serde(default)]`: a missing field deserializes as `Absent`;
+- `#[serde(skip_serializing_if = "Presence::is_absent")]`: `Absent` is
   omitted from the output instead of written as `null`.
 
 Without `#[serde(default)]`, serde treats a missing field exactly like an
@@ -130,13 +130,13 @@ And   the deserialized age equals Presence::Null
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
-- [x] **T1 — Pin the three-state round-trip with both attributes.** Scenarios: _A Some field round-trips with both attributes; A Null field round-trips with both attributes; An Absent field round-trips with both attributes; Every presence value survives a round-trip with both attributes_. Tests: acceptance (in `tests/acceptance.rs` under a `// Spec 02 — round-trip with both attributes` heading, with a fixture struct whose `age` field has both attributes) + property (`proptest`: for any `Presence<u32>`, `from_str(to_string(x)) == x` through the fixture struct).
-- [x] **T2 — Pin the two lossy configurations.** Needs: T1. Scenarios: _A missing field without serde(default) deserializes as Null; An Absent field without skip_serializing_if comes back as Null_. Tests: acceptance (under a `// Spec 02 — lossy configurations` heading directly after T1's block, each with its own fixture struct missing one attribute).
-- [x] **T3 — Make the round-trip rule visible in the public docs.** Needs: T2. Scenarios: _none (documentation changes from Implementation Notes, checked in review)_. Tests: unit (a doctest in the crate-root `# Serde` section that deserializes and serializes all three states). Covers the crate-root `# Serde` section in `src/lib.rs`, the pointer in the `Presence` type docs, the reduced `src/serde.rs` module docs (removing the broken `User` example), a `## Serde` section in `README.md`, `[package.metadata.docs.rs] all-features = true` in `Cargo.toml`, and the `### Documentation` entry in `CHANGELOG.md`.
+- [x] **T1 - Pin the three-state round-trip with both attributes.** Scenarios: _A Some field round-trips with both attributes; A Null field round-trips with both attributes; An Absent field round-trips with both attributes; Every presence value survives a round-trip with both attributes_. Tests: acceptance (in `tests/acceptance.rs` under a `// Spec 02: round-trip with both attributes` heading, with a fixture struct whose `age` field has both attributes) + property (`proptest`: for any `Presence<u32>`, `from_str(to_string(x)) == x` through the fixture struct).
+- [x] **T2 - Pin the two lossy configurations.** Needs: T1. Scenarios: _A missing field without serde(default) deserializes as Null; An Absent field without skip_serializing_if comes back as Null_. Tests: acceptance (under a `// Spec 02: lossy configurations` heading directly after T1's block, each with its own fixture struct missing one attribute).
+- [x] **T3 - Make the round-trip rule visible in the public docs.** Needs: T2. Scenarios: _none (documentation changes from Implementation Notes, checked in review)_. Tests: unit (a doctest in the crate-root `# Serde` section that deserializes and serializes all three states). Covers the crate-root `# Serde` section in `src/lib.rs`, the pointer in the `Presence` type docs, the reduced `src/serde.rs` module docs (removing the broken `User` example), a `## Serde` section in `README.md`, `[package.metadata.docs.rs] all-features = true` in `Cargo.toml`, and the `### Documentation` entry in `CHANGELOG.md`.
 
 ---
 

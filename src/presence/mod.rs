@@ -152,19 +152,18 @@
 //!
 //! | Rule | Methods | Behavior |
 //! | --- | --- | --- |
-//! | Self decides | [`map`], [`and`], [`and_then`], [`filter`], [`flatten`], [`unzip`], [`transpose`], `copied`, `cloned` | A `Null` or `Absent` receiver keeps its state; only `Some` looks at the closure or the argument. |
+//! | Self decides | [`map`], [`and`], [`and_then`], [`filter`], [`flatten`], [`unzip`], [`transpose`], `copied`, `cloned` | A `Null` or `Absent` receiver keeps its state. Only `Some` looks at the closure or the argument. |
 //! | First `Some` wins | [`or`], [`or_else`] | `self` if it is `Some`, otherwise the alternative, whatever its state. |
 //! | `Absent` over `Null` over `Some` | [`zip`], [`zip_with`], `collect`, `sum`, `product` | `Absent` if any input is `Absent`, otherwise `Null` if any is `Null`, otherwise `Some`. The state of the result does not depend on the order of the inputs. |
-//! | Last non-`Absent` wins | [`merge`] | `later` unless it is `Absent`, in which case `self`; composes PATCH requests. |
-//! | `xor` | [`xor`] | The `Some` side if exactly one side is `Some`; `Null` if both are `Null`; otherwise `Absent`, including for two `Some`s. |
+//! | Last non-`Absent` wins | [`merge`] | `later` unless it is `Absent`, in which case `self`. Composes PATCH requests. |
+//! | `xor` | [`xor`] | The `Some` side if exactly one side is `Some`, `Null` if both are `Null`, and `Absent` otherwise, two `Some`s included. |
 //!
 //! So `Null.and(Absent)` is `Null` and `Null.or(Absent)` is `Absent`, while
 //! `Null.zip(Absent)` is `Absent` whichever side each is on.
 //!
-//! Where a method has to invent a "nothing" result — [`filter`] rejecting a value,
-//! [`xor`] of two `Some`s, [`take_if`] taking nothing — it returns `Absent`. In PATCH terms
-//! `Absent` means "leave the field unchanged", the safe default; `Null` would mean "clear
-//! it".
+//! A method that has to invent a "nothing" result returns `Absent`: [`filter`] rejecting a
+//! value, [`xor`] of two `Some`s, [`take_if`] taking nothing. In PATCH terms `Absent` means
+//! "leave the field unchanged", the safe default, where `Null` would mean "clear it".
 //!
 //! [`map`]: Presence::map
 //! [`and`]: Presence::and

@@ -1,4 +1,4 @@
-# Spec 05 — `From<&Presence<T>>` and `From<&mut Presence<T>>`
+# Spec 05: `From<&Presence<T>>` and `From<&mut Presence<T>>`
 
 **Status:** Implemented
 **Effort:** Small
@@ -65,12 +65,12 @@ Then  it receives Some(&7), Null and Absent respectively
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
-- [x] **T1 — `From<&Presence<T>> for Presence<&T>`.** Scenarios: _Converting a borrowed presence gives a presence of a reference; A borrowed presence is accepted where Into<Presence<&T>> is required_. Tests: acceptance + property (`Presence::from(&p) == p.as_ref()`), plus a doctest on the impl. Adds the impl after `From<T>` in `src/presence.rs` and the CHANGELOG `Added` entry.
-- [x] **T2 — `From<&mut Presence<T>> for Presence<&mut T>`.** Needs: T1. Scenarios: _Converting a mutably borrowed presence allows changing the value_. Tests: acceptance, plus a doctest on the impl. Adds the impl directly after T1's (same region, hence the dependency) and extends the CHANGELOG entry.
+- [x] **T1 - `From<&Presence<T>> for Presence<&T>`.** Scenarios: _Converting a borrowed presence gives a presence of a reference; A borrowed presence is accepted where Into<Presence<&T>> is required_. Tests: acceptance + property (`Presence::from(&p) == p.as_ref()`), plus a doctest on the impl. Adds the impl after `From<T>` in `src/presence.rs` and the CHANGELOG `Added` entry.
+- [x] **T2 - `From<&mut Presence<T>> for Presence<&mut T>`.** Needs: T1. Scenarios: _Converting a mutably borrowed presence allows changing the value_. Tests: acceptance, plus a doctest on the impl. Adds the impl directly after T1's (same region, hence the dependency) and extends the CHANGELOG entry.
 
 ---
 
@@ -78,7 +78,7 @@ are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
 - Put both impls in the `From` section of `src/presence.rs`, next to
   `From<T>`. Bodies: `presence.as_ref()` and `presence.as_mut()`.
-- Tests go in `tests/acceptance.rs` under `// Spec 05 — From references`.
+- Tests go in `tests/acceptance.rs` under `// Spec 05: From references`.
   The first scenario is a proptest using the existing `any_presence()`
   strategy.
 

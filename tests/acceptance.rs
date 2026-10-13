@@ -31,7 +31,7 @@ fn state<T>(presence: &Presence<T>) -> Presence<()> {
     presence.as_ref().map(|_| ())
 }
 
-// Spec 01 — shared borrow
+// Spec 01: shared borrow
 
 #[test]
 fn iterating_a_borrowed_some_yields_a_reference_to_its_value() {
@@ -103,7 +103,7 @@ fn a_borrowed_presence_is_accepted_where_into_iterator_is_required() {
     assert_eq!(absent, Vec::<&i32>::new());
 }
 
-// Spec 01 — mutable borrow
+// Spec 01: mutable borrow
 
 #[test]
 fn iterating_a_mutably_borrowed_some_allows_modifying_its_value() {
@@ -147,7 +147,7 @@ fn iterating_a_mutably_borrowed_null_or_absent_yields_nothing_and_leaves_the_sta
     assert_eq!(absent, Presence::Absent);
 }
 
-// Spec 01 — equivalence and lint
+// Spec 01: equivalence and lint
 
 #[test]
 fn the_clippy_suppression_is_no_longer_needed() {
@@ -168,7 +168,7 @@ fn the_clippy_suppression_is_no_longer_needed() {
     assert_eq!(suppressions, 0);
 }
 
-// Spec 02 — round-trip with both attributes
+// Spec 02: round-trip with both attributes
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 struct WithBothAttributes {
@@ -260,7 +260,7 @@ proptest! {
     }
 }
 
-// Spec 02 — lossy configurations
+// Spec 02: lossy configurations
 
 #[test]
 fn a_missing_field_without_serde_default_deserializes_as_null() {
@@ -306,7 +306,7 @@ fn an_absent_field_without_skip_serializing_if_comes_back_as_null() {
     assert_eq!(back.age, Presence::Null);
 }
 
-// Spec 03 — self decides and first Some wins
+// Spec 03: self decides and first Some wins
 
 proptest! {
     #![proptest_config(persisted_config())]
@@ -374,7 +374,7 @@ proptest! {
     }
 }
 
-// Spec 03 — Absent over Null over Some
+// Spec 03: Absent over Null over Some
 
 /// The precedence rule written out once: Absent if any input is Absent, otherwise
 /// Null if any is Null, otherwise Some.
@@ -446,7 +446,7 @@ proptest! {
     }
 }
 
-// Spec 03 — Absent results of xor, filter and take_if
+// Spec 03: Absent results of xor, filter and take_if
 
 proptest! {
     #![proptest_config(persisted_config())]
@@ -503,7 +503,7 @@ fn take_if_that_takes_nothing_returns_absent_and_leaves_the_presence_unchanged()
     }
 }
 
-// Spec 03 — owning iterator is IntoIter
+// Spec 03: owning iterator is IntoIter
 
 #[test]
 fn into_iter_returns_presence_into_iter() {
@@ -518,7 +518,7 @@ fn into_iter_returns_presence_into_iter() {
     assert_eq!(iter.collect::<Vec<_>>(), vec![1]);
 }
 
-// Spec 03 — is_nullish_or and deprecated names
+// Spec 03: is_nullish_or and deprecated names
 
 proptest! {
     #![proptest_config(persisted_config())]
@@ -566,7 +566,7 @@ proptest! {
     }
 }
 
-// Spec 03 — ordering and From<T>
+// Spec 03: ordering and From<T>
 
 fn rank(presence: Presence<i32>) -> u8 {
     match presence {
@@ -611,7 +611,7 @@ fn converting_an_option_into_a_presence_of_option_wraps_it() {
     assert_eq!(presence, Presence::Some(None));
 }
 
-// Spec 04 — streaming
+// Spec 04: streaming
 
 proptest! {
     #![proptest_config(persisted_config())]
@@ -709,7 +709,7 @@ fn values_before_a_null_are_combined_as_they_arrive() {
     let _: Presence<i32> = items.into_iter().sum();
 }
 
-// Spec 05 — From references
+// Spec 05: From references
 
 proptest! {
     #![proptest_config(persisted_config())]
@@ -772,7 +772,7 @@ fn converting_a_mutably_borrowed_presence_allows_changing_the_value() {
     }
 }
 
-// Spec 06 — patching
+// Spec 06: patching
 
 proptest! {
     #![proptest_config(persisted_config())]

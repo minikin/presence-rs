@@ -1,21 +1,21 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Security fixes go into the latest release. presence-rs is below 1.0, so a
+fix ships as a new patch or minor version of the current line, not as a
+backport.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| ------- | --------- |
+| 0.3.x   | yes       |
+| < 0.3   | no        |
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Report it privately through GitHub: open the repository's **Security** tab
+and choose **Report a vulnerability**. Please do not open a public pull
+request for it.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+You get a reply within a week. If the report is confirmed, the fix and a
+new release follow, and the advisory credits you unless you ask otherwise.

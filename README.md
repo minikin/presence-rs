@@ -5,72 +5,44 @@
 [![docs.rs](https://img.shields.io/docsrs/presence-rs)](https://docs.rs/presence-rs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> A Rust library providing a tri-state type for representing value presence
-> in schemas and data structures.
+`Presence<T>` is `Option<T>` with one more state. A JSON field can be left
+out, sent as `null` or sent with a value, and a PATCH request means something
+different by each: leave the stored value alone, clear it, or set it.
+`Option<T>` has two states for those three, so the difference is lost the
+moment the request is parsed. `Presence<T>` keeps it:
 
-> [!TIP]
-> If you want to read more about the motivation behind this crate, check out
-> [Stop Losing Intent: Absent, Null, and Value in Rust](https://minikin.me/blog/presence-rs)
+- `Absent`: the field is not there, `{}`
+- `Null`: the field is there and `null`, `{"field": null}`
+- `Some(value)`: the field has a value, `{"field": 42}`
 
-- [Presence](#presence)
-  - [Overview](#overview)
-  - [Cardinality](#cardinality)
-  - [Why Not `Option<Option<T>>`?](#why-not-optionoptiont)
-  - [Usage](#usage)
-  - [Examples](#examples)
-    - [Basic Usage](#basic-usage)
-    - [Practical Example: API Update Request](#practical-example-api-update-request)
-  - [Serde](#serde)
-  - [JSON Schema and OpenAPI](#json-schema-and-openapi)
-  - [Use Cases](#use-cases)
-  - [Contributing](#contributing)
-  - [License](#license)
+The API follows `Option`'s, so `map`, `and_then`, `unwrap_or` and the rest
+work as you expect. On top of it, `apply_to` and `merge` apply and combine
+PATCH requests. Serde and JSON Schema support sit behind features. The crate
+is `#![no_std]` and, with default features, needs no allocator.
 
-## Overview
+The blog post [Stop Losing Intent: Absent, Null, and Value in
+Rust](https://minikin.me/blog/presence-rs) explains the motivation.
 
-`Presence<T>` extends the traditional `Option<T>` two-state model (Some/None)
-with an additional distinction between "absent" and "null". The crate is
-`#![no_std]` and, with default features, needs no allocator.
-This is particularly useful when working with serialization formats like JSON
-where the following states are semantically different:
+## Install
 
-- **Absent**: Field not present in the data structure: `{}`
-- **Null**: Field present but explicitly set to null: `{"field": null}`
-- **Some**: Field present with a concrete value: `{"field": value}`
+```toml
+[dependencies]
+presence-rs = "0.3.0"
+```
 
-## Cardinality
+The minimum supported Rust version is 1.85.
 
-The `Presence` type increases the cardinality (number of possible states) of any
-wrapped type by adding two states: `Absent` and `Null`.
+## Why not `Option<Option<T>>`?
 
-| Type             | Valid States                                  | Cardinality |
-| ---------------- | --------------------------------------------- | ----------- |
-| `bool`           | `true`, `false`                               | 2           |
-| `Option<bool>`   | `None`, `Some(true)`, `Some(false)`           | 3           |
-| `Presence<bool>` | `Absent`, `Null`, `Some(true)`, `Some(false)` | 4           |
-
-This distinction is particularly important in schema design and APIs where the semantic
-difference between "field not present" and "field explicitly set to null" has meaning.
-
-## Why Not `Option<Option<T>>`?
-
-While `Option<Option<T>>` can technically represent three states, `Presence<T>`
-offers several advantages:
-
-- **Clarity**: `Presence::Absent`, `Presence::Null`, and `Presence::Some(value)`
-are self-documenting. Compare this to `None`, `Some(None)`, and `Some(Some(value))`
-where the meaning of nested `None` values is ambiguous.
-- **Ergonomics**: Method names like `is_absent()`, `is_null()`, and `is_present()`
-clearly express intent, versus checking `option.is_none()` or `option == Some(None)`.
-- **Type Safety**: The compiler understands the three distinct states,
-making pattern matching more explicit and reducing cognitive load.
-- **Semantics**: `Presence` models the domain concept directly rather than
-forcing a tri-state model into a two-level optional structure.
+`Option<Option<T>>` has three states too, but `None`, `Some(None)` and
+`Some(Some(v))` do not say which one means "missing" and which "null", and
+every reader has to remember the convention. `Presence` names the states,
+and its methods (`is_absent`, `is_null`, `is_present`) name the checks:
 
 ```rust
 use presence_rs::Presence;
 
-// With Presence - clear and explicit
+// With Presence
 let value: Presence<i32> = Presence::Null;
 match value {
     Presence::Absent => println!("Field not in payload"),
@@ -78,7 +50,7 @@ match value {
     Presence::Some(v) => println!("Value: {}", v),
 }
 
-// With Option<Option<T>> - confusing
+// With Option<Option<T>>
 let value: Option<Option<i32>> = Some(None);
 match value {
     None => println!("Field not in payload"),
@@ -96,41 +68,25 @@ to tell `null` from a missing field: every such field carries
 `Option<Option<T>>` converts with `From` in both directions: `None` is `Absent`,
 `Some(None)` is `Null` and `Some(Some(v))` is `Some(v)`.
 
-## Usage
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-presence-rs = "0.3.0"
-```
-
-The minimum supported Rust version is 1.85.
-
-## Examples
-
-### Basic Usage
+## Quick start
 
 ```rust
 use presence_rs::Presence;
 
-// Create Presence values
 let absent: Presence<i32> = Presence::Absent;
 let null: Presence<i32> = Presence::Null;
 let some: Presence<i32> = Presence::Some(42);
 
-// Query the state
 assert!(absent.is_absent());
 assert!(null.is_null());
 assert!(some.is_present());
 ```
 
-### Practical Example: API Update Request
+## Applying a PATCH request
 
-A PATCH request leaves out fields it does not touch, sends `null` for fields to
-clear, and sends values for fields to set. `Presence::apply_to` applies a field to
-the stored model (and returns the value it replaced, which this example ignores);
-`Presence::merge` folds several requests into one.
+`apply_to` applies one field of a request to the stored model and returns the
+value it replaced, which this example ignores. `merge` folds several requests
+into one: the later field wins unless it is `Absent`.
 
 ```rust
 use presence_rs::Presence;
@@ -198,7 +154,8 @@ assert_eq!(
 
 ## Serde
 
-Enable the `serde` feature. The example below also uses `serde` and `serde_json` directly:
+Enable the `serde` feature. The example also uses `serde` and `serde_json`
+directly:
 
 ```toml
 [dependencies]
@@ -207,8 +164,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ```
 
-`Some(value)` is written as the value; `Null` and `Absent` are both written as `null`.
-A struct field keeps all three states apart only when it has **both** attributes:
+`Some(value)` is written as the value, and `Null` and `Absent` are both
+written as `null`. A struct field keeps all three states apart only when it
+has **both** attributes:
 
 - `#[serde(default)]` makes a missing field `Absent`. Without it, a missing `Presence`
   field is read exactly like `null` (the same rule serde applies to `Option`), so it
@@ -292,22 +250,11 @@ assert_eq!(schema["properties"]["nickname"], json!({"type": ["string", "null"]})
 assert!(schema.get("required").is_none());
 ```
 
-## Use Cases
-
-This type is particularly useful in:
-
-- **API clients/servers** where you need to distinguish between a field not
-being sent vs. being explicitly set to null
-- **Partial updates** where absence means "don't change" vs. null means "clear the value"
-- **Schema validation** where field presence has semantic meaning
-- **GraphQL implementations** where null and undefined are distinct concepts
-- **Database operations** where you need to differentiate between "not provided"
-and "set to NULL"
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the
+workflow and the checks a change has to pass.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).

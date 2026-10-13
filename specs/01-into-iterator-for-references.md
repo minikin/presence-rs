@@ -1,4 +1,4 @@
-# Spec 01 — `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`
+# Spec 01: `IntoIterator` for `&Presence<T>` and `&mut Presence<T>`
 
 **Status:** Implemented
 **Effort:** Small
@@ -19,7 +19,7 @@ The gap is also visible to tooling: pedantic clippy flags `iter()` and
 
 Everything needed already exists: `Presence::iter()` returns `Iter<'_, T>` and
 `Presence::iter_mut()` returns `IterMut<'_, T>` (both exact-size,
-double-ended and fused). The change is purely additive — `for x in &presence`
+double-ended and fused). The change is purely additive: `for x in &presence`
 did not compile before, so no existing code changes meaning.
 
 Decisions (proposed in the spec interview, accepted by the user):
@@ -27,7 +27,7 @@ Decisions (proposed in the spec interview, accepted by the user):
 1. `&Presence<T>` yields `&T` through the existing `Iter<'a, T>`;
    `&mut Presence<T>` yields `&mut T` through the existing `IterMut<'a, T>`.
    No new public types. `Some` yields exactly one item; `Null` and `Absent`
-   yield none — identical to `iter()` / `iter_mut()`.
+   yield none, identical to `iter()` / `iter_mut()`.
 2. Both impls get doc examples (doctests) covering `Some`, `Null` and `Absent`.
 3. `CHANGELOG.md` gets an `## [Unreleased]` section with an `### Added` entry;
    no version bump.
@@ -113,13 +113,13 @@ Then  it reports no warnings
 ## Tasks
 
 Each task lists its scenarios, the test types that pin it (unit /
-property / acceptance), and — when it depends on earlier tasks — a
+property / acceptance), and, when it depends on earlier tasks, a
 `Needs:` naming them. Tasks with no `Needs:` are roots; tasks whose needs
 are all done are ready; the graph is what `scripts/keeler-graph.sh` reads.
 
-- [x] **T1 — Iterate a shared borrow: `IntoIterator for &Presence<T>`.** Scenarios: _Iterating a borrowed Some yields a reference to its value; Iterating a borrowed Null yields nothing; Iterating a borrowed Absent yields nothing; A borrowed Presence is accepted where IntoIterator is required_. Tests: unit (doctest on the impl covering Some/Null/Absent) + acceptance (creates `tests/acceptance.rs`, tests under a `// Spec 01 — shared borrow` heading). Adds the impl directly after `impl<T> IntoIterator for Presence<T>` and removes the `#[expect(clippy::iter_without_into_iter)]` on `Presence::iter` in the same cycle (an unfulfilled expectation would itself fail the lint gate).
-- [x] **T2 — Iterate a mutable borrow: `IntoIterator for &mut Presence<T>`.** Needs: T1. Scenarios: _Iterating a mutably borrowed Some allows modifying its value; Iterating a mutably borrowed Null or Absent yields nothing and leaves the state unchanged_. Tests: unit (doctest on the impl) + acceptance (under a `// Spec 01 — mutable borrow` heading in `tests/acceptance.rs`). Adds the impl directly after T1's impl — same region of `src/presence.rs`, hence the dependency — and removes the `#[expect]` on `Presence::iter_mut`.
-- [x] **T3 — Reference iteration is equivalent to `iter()` / `iter_mut()`, lint-clean, documented.** Needs: T1, T2. Scenarios: _Reference iteration matches iter() and iter_mut(); The clippy suppression is no longer needed_. Tests: property (proptest over `Some(any::<i32>())` / `Null` / `Absent`: `(&p).into_iter()` and `p.iter()` yield equal items with equal `len()` and `size_hint()`, item count is 1 iff `p.is_present()`; same for `&mut p` vs `iter_mut()`) in a `#[cfg(test)]` block in `src/presence.rs` + acceptance (the clippy scenario is verified by the lint gate, `keeler lint`, with no `iter_without_into_iter` expectation left in the source). Also updates the `Iter` / `IterMut` struct docs and adds `## [Unreleased]` → `### Added` to `CHANGELOG.md`.
+- [x] **T1 - Iterate a shared borrow: `IntoIterator for &Presence<T>`.** Scenarios: _Iterating a borrowed Some yields a reference to its value; Iterating a borrowed Null yields nothing; Iterating a borrowed Absent yields nothing; A borrowed Presence is accepted where IntoIterator is required_. Tests: unit (doctest on the impl covering Some/Null/Absent) + acceptance (creates `tests/acceptance.rs`, tests under a `// Spec 01: shared borrow` heading). Adds the impl directly after `impl<T> IntoIterator for Presence<T>` and removes the `#[expect(clippy::iter_without_into_iter)]` on `Presence::iter` in the same cycle (an unfulfilled expectation would itself fail the lint gate).
+- [x] **T2 - Iterate a mutable borrow: `IntoIterator for &mut Presence<T>`.** Needs: T1. Scenarios: _Iterating a mutably borrowed Some allows modifying its value; Iterating a mutably borrowed Null or Absent yields nothing and leaves the state unchanged_. Tests: unit (doctest on the impl) + acceptance (under a `// Spec 01: mutable borrow` heading in `tests/acceptance.rs`). Adds the impl directly after T1's impl, in the same region of `src/presence.rs`, hence the dependency, and removes the `#[expect]` on `Presence::iter_mut`.
+- [x] **T3 - Reference iteration is equivalent to `iter()` / `iter_mut()`, lint-clean, documented.** Needs: T1, T2. Scenarios: _Reference iteration matches iter() and iter_mut(); The clippy suppression is no longer needed_. Tests: property (proptest over `Some(any::<i32>())` / `Null` / `Absent`: `(&p).into_iter()` and `p.iter()` yield equal items with equal `len()` and `size_hint()`, item count is 1 iff `p.is_present()`; same for `&mut p` vs `iter_mut()`) in a `#[cfg(test)]` block in `src/presence.rs` + acceptance (the clippy scenario is verified by the lint gate, `keeler lint`, with no `iter_without_into_iter` expectation left in the source). Also updates the `Iter` / `IterMut` struct docs and adds `## [Unreleased]` → `### Added` to `CHANGELOG.md`.
 
 ---
 

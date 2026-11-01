@@ -3,7 +3,7 @@ use super::Presence;
 impl<T> Presence<T> {
     /// Converts to `Option<T>`, treating both [`Null`] and [`Absent`] as `None`.
     ///
-    /// This is the "optional" representation where only concrete values matter.
+    /// The "optional" representation, which keeps only concrete values.
     ///
     /// [`Null`]: Presence::Null
     /// [`Absent`]: Presence::Absent
@@ -37,8 +37,7 @@ impl<T> Presence<T> {
     /// - [`Null`] → `Some(None)`
     /// - [`Some(v)`] → `Some(Some(v))`
     ///
-    /// This is the "nullable" representation that preserves the distinction
-    /// between absent and explicitly null.
+    /// The "nullable" representation, which keeps absent and explicitly null apart.
     ///
     /// [`Absent`]: Presence::Absent
     /// [`Null`]: Presence::Null
@@ -70,7 +69,7 @@ impl<T> Presence<T> {
 
     /// Creates from `Option<T>`, treating `None` as [`Absent`].
     ///
-    /// This is the "optional" representation where `None` means the field is absent.
+    /// The "optional" representation, where `None` means the field is absent.
     ///
     /// [`Absent`]: Presence::Absent
     ///
@@ -99,8 +98,7 @@ impl<T> Presence<T> {
     /// - `Some(None)` → [`Null`]
     /// - `Some(Some(v))` → [`Some(v)`]
     ///
-    /// This is the "nullable" representation that distinguishes between
-    /// absent and explicitly null.
+    /// The "nullable" representation, which keeps absent and explicitly null apart.
     ///
     /// [`Absent`]: Presence::Absent
     /// [`Null`]: Presence::Null
@@ -129,7 +127,7 @@ impl<T> Presence<T> {
         }
     }
 
-    /// Converts from `Presence<T>` to `Option<Option<T>>`; the same as
+    /// Converts from `Presence<T>` to `Option<Option<T>>`, the same as
     /// [`to_nullable`](Presence::to_nullable).
     #[deprecated(since = "0.3.0", note = "use `to_nullable`, which does the same")]
     #[inline]
@@ -140,9 +138,8 @@ impl<T> Presence<T> {
     /// Transforms the `Presence<T>` into a [`Result<T, E>`], mapping [`Some(v)`] to
     /// [`Ok(v)`] and [`Null`] or [`Absent`] to [`Err(err)`].
     ///
-    /// Arguments passed to `ok_or` are eagerly evaluated; if you are passing the
-    /// result of a function call, it is recommended to use [`ok_or_else`], which is
-    /// lazily evaluated.
+    /// The error is evaluated eagerly. For one that comes from a function call, use
+    /// [`ok_or_else`], which is lazy.
     ///
     /// [`Some(v)`]: Presence::Some
     /// [`Ok(v)`]: Ok
@@ -269,7 +266,7 @@ impl<T, E> Presence<Result<T, E>> {
 impl<T> From<T> for Presence<T> {
     /// Converts a value of type `T` into `Presence::Some(T)`.
     ///
-    /// This applies to `Option` values too: converting `None` into a
+    /// `Option` values go the same way: converting `None` into a
     /// `Presence<Option<U>>` gives `Some(None)`, not `Null` or `Absent`. To map an
     /// `Option` onto the states, use [`from_optional`](Presence::from_optional)
     /// (`None` becomes `Absent`) or [`from_nullable`](Presence::from_nullable) for

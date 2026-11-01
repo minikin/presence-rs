@@ -100,8 +100,8 @@ impl<T> Presence<T> {
 
     /// Returns `true` if the value is "nullish" (null-like).
     ///
-    /// Returns `true` for [`Null`] or [`Absent`], `false` for [`Some`].
-    /// Useful for detecting any kind of "empty" or "missing" state.
+    /// Returns `true` for [`Null`] or [`Absent`], `false` for [`Some`], so one call
+    /// covers both empty states.
     ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
@@ -230,8 +230,8 @@ impl<T> Presence<T> {
 
     /// Returns the number of elements in the `Presence`.
     ///
-    /// This returns `1` if the presence contains a [`Some`] value, and `0` for
-    /// [`Null`] or [`Absent`]. This is primarily used for iterator support.
+    /// `1` for a [`Some`] value, `0` for [`Null`] or [`Absent`]. The iterators use it
+    /// for their [`ExactSizeIterator`] length and size hint.
     ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null

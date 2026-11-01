@@ -63,8 +63,7 @@ impl<T> Presence<T> {
 
     /// Converts from `Pin<&Presence<T>>` to `Presence<Pin<&T>>`.
     ///
-    /// This is useful when you have a pinned presence and want to get a presence
-    /// of pinned references to the inner value.
+    /// The inner value stays pinned: it never moves out of the pinned `Presence`.
     ///
     /// # Examples
     ///
@@ -97,8 +96,7 @@ impl<T> Presence<T> {
 
     /// Converts from `Pin<&mut Presence<T>>` to `Presence<Pin<&mut T>>`.
     ///
-    /// This is useful when you have a pinned mutable presence and want to get a presence
-    /// of pinned mutable references to the inner value.
+    /// The inner value stays pinned: it never moves out of the pinned `Presence`.
     ///
     /// # Examples
     ///

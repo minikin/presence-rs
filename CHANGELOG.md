@@ -8,8 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.3.0] - 2026-11-01
+
+PATCH helpers, `#[derive(Patch)]` through a new `derive` feature and a new
+`presence-rs-derive` crate, `no_std` without an allocator, and JSON Schema
+through a new `schemars` feature. Four methods and one type are renamed,
+and the old names stay as deprecated aliases. A few changes can break a
+build: the `serde` feature no longer enables serde's `std` and `derive`,
+the serde floor rises to 1.0.194, and `Presence::from(&p)` needs its target
+type named (see Changed).
+
 ### Added
 
+- **PATCH helpers.** `Presence::apply_to` applies a presence to an `Option`
+  field as a PATCH would: `Absent` leaves it, `Null` clears it, `Some` sets
+  it, and the value it replaced comes back. `Presence::merge` composes two
+  patches. The later one wins unless it is `Absent`, so a series of PATCH
+  requests folds into one.
 - **`#[derive(Patch)]`.** The new `derive` feature generates a patch struct
   for a model struct, through the new `presence-rs-derive` crate. A model
   field of type `Option<T>` becomes a `Presence<T>` and any other field an
@@ -21,24 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `JsonSchema`, the schema matches what the patch accepts. `#[patch(name)]`,
   `#[patch(skip)]` and `#[patch(crate)]` cover naming, leaving fields out
   and a renamed dependency.
-
-
-## [0.3.0] - 2026-10-05
-
-PATCH helpers, `no_std` without an allocator, and JSON Schema through a new
-`schemars` feature. Four methods and one type are renamed, and the old names
-stay as deprecated aliases. A few changes can break a build: the `serde`
-feature no longer enables serde's `std` and `derive`, the serde floor rises
-to 1.0.194, and `Presence::from(&p)` needs its target type named (see
-Changed).
-
-### Added
-
-- **PATCH helpers.** `Presence::apply_to` applies a presence to an `Option`
-  field as a PATCH would: `Absent` leaves it, `Null` clears it, `Some` sets
-  it, and the value it replaced comes back. `Presence::merge` composes two
-  patches. The later one wins unless it is `Absent`, so a series of PATCH
-  requests folds into one.
 - **`unwrap_or_absent_or_null(absent, null)`** returns the value of `Some`,
   `absent` for `Absent` and `null` for `Null`. The name gives the order of
   the defaults. `unwrap_or_else_absent_or_null` is its lazy form and calls

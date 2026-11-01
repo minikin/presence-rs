@@ -40,8 +40,8 @@ install `just`, `cargo-nextest`, `cargo-llvm-cov`, `cargo-mutants` and
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
 ```
 
 With Keeler installed, `keeler dev` runs all of that plus coverage and the
@@ -50,7 +50,8 @@ changed. A surviving mutant means a test would still pass with that line
 broken. Fix it with the test that catches it, never by reshaping the code
 until the mutant goes away.
 
-CI runs the same gates and adds:
+CI runs the same gates, skips the Rust jobs when a change touches only
+prose outside the README, and adds:
 
 - the tests on Linux, macOS and Windows, on stable and beta, and on nightly
   on Linux
@@ -60,8 +61,10 @@ CI runs the same gates and adds:
 - `cargo-semver-checks` against the latest release
 - a docs build as docs.rs runs it
 - `cargo audit`
+- line coverage of at least 90% and a CRAP score of at most 10 per function
 - a CRAP comparison against `crap-baseline.json`, which fails when any
   function's score went up
+- mutation tests on the lines a pull request changes
 
 ## Tests
 

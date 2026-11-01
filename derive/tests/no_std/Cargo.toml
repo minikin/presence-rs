@@ -1,0 +1,14 @@
+# Builds a derived patch for a target without std or an allocator. CI runs
+# `cargo build --target thumbv7em-none-eabihf` on it. It is its own workspace so
+# the presence-rs workspace does not try to build it for the host.
+[package]
+name = "presence-rs-no-std-fixture"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+presence-rs = { path = "../../..", default-features = false, features = ["derive", "serde"] }
+serde = { version = "1.0.194", default-features = false, features = ["derive"] }

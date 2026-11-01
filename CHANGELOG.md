@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`#[derive(Patch)]`.** The new `derive` feature generates a patch struct
+  for a model struct, through the new `presence-rs-derive` crate. A model
+  field of type `Option<T>` becomes a `Presence<T>` and any other field an
+  `Option<T>`. The patch implements the new `Patch` trait (`apply_to`,
+  `merge`, `is_empty`) and `Default`. `#[patch(derive(...))]` adds derives,
+  and with serde derives each field gets the serde attributes a patch needs,
+  a `null` for a non-`Option` field fails to deserialize, and the model's
+  `rename_all`, `deny_unknown_fields`, `rename` and `alias` carry over. With
+  `JsonSchema`, the schema matches what the patch accepts. `#[patch(name)]`,
+  `#[patch(skip)]` and `#[patch(crate)]` cover naming, leaving fields out
+  and a renamed dependency.
+
 
 ## [0.3.0] - 2026-10-05
 

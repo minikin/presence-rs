@@ -147,6 +147,8 @@ fn library_source_never_uses_the_alloc_crate() {
             include_str!("../src/presence/transform.rs"),
         ),
         ("src/serde.rs", include_str!("../src/serde.rs")),
+        ("src/patch.rs", include_str!("../src/patch.rs")),
+        ("src/__private.rs", include_str!("../src/__private.rs")),
     ] {
         let library_code = source.split("#[cfg(test)]").next().unwrap_or(source);
         assert!(

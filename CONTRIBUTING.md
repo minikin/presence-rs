@@ -91,10 +91,20 @@ verified.
 
 ## Releases
 
-The maintainer bumps the version in `Cargo.toml`, dates the CHANGELOG
-entry, merges, and pushes a `vX.Y.Z` tag on `main`. The release workflow
-checks the tag against the crate version, runs the tests and the `no_std`
-and MSRV builds, and publishes to crates.io through trusted publishing.
+The repository holds two crates, `presence-rs` and `presence-rs-derive`,
+released together at one version. The maintainer bumps
+`[workspace.package] version` and the `=X.Y.Z` pin on
+`presence-rs-derive` in the root `Cargo.toml` (a test fails if the two
+disagree), dates the CHANGELOG entry, merges, and pushes a `vX.Y.Z` tag on
+`main`. The release workflow checks the tag against the crate version, runs
+the tests and the `no_std` and MSRV builds, and publishes both crates to
+crates.io through trusted publishing, the derive crate first.
+
+crates.io configures trusted publishing per crate, and only for a crate
+that already exists. The first release of `presence-rs-derive` is
+therefore published by hand with an API token
+(`cargo publish -p presence-rs-derive`), and its trusted publisher is
+added on crates.io before the tag is pushed.
 
 ## Code of conduct
 

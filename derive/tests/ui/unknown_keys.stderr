@@ -1,0 +1,17 @@
+error: unknown patch attribute `rename`
+ --> tests/ui/unknown_keys.rs:4:9
+  |
+4 | #[patch(rename = AccountUpdate)]
+  |         ^^^^^^
+
+error: unknown patch attribute `nullable`
+ --> tests/ui/unknown_keys.rs:6:13
+  |
+6 |     #[patch(nullable)]
+  |             ^^^^^^^^
+
+error: unknown patch attribute `flatten`
+ --> tests/ui/unknown_keys.rs:8:19
+  |
+8 |     #[patch(skip, flatten)]
+  |                   ^^^^^^^

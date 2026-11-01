@@ -84,3 +84,5 @@ crap-report.json
 mutants.out*/
 .keeler/
 2026-09-14.md
+wip/
+derive/tests/no_std/Cargo.lock

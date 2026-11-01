@@ -40,10 +40,10 @@ jobs:
       # Test builds always enable `serde` through the crate's dev-dependency on
       # itself, so a separate no-features test run would repeat this one.
       - name: Run tests
-        run: cargo test --all-features --verbose
+        run: cargo test --workspace --all-features --verbose
 
       - name: Run doc tests
-        run: cargo test --doc --all-features
+        run: cargo test --workspace --doc --all-features
 
   fmt:
     name: Rustfmt
@@ -78,10 +78,10 @@ jobs:
       # Only a library-only build leaves the dev-dependencies, and with them
       # the `serde` feature, out.
       - name: Run clippy (library, no features)
-        run: cargo clippy --lib --no-default-features -- -D warnings
+        run: cargo clippy --workspace --lib --no-default-features -- -D warnings
 
       - name: Run clippy (all features)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   msrv:
     name: MSRV
@@ -98,10 +98,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check library (no features)
-        run: cargo check --lib --no-default-features
+        run: cargo check --workspace --lib --no-default-features
 
       - name: Check library (all features)
-        run: cargo check --lib --all-features
+        run: cargo check --workspace --lib --all-features
 
   no-std:
     name: no_std
@@ -127,6 +127,12 @@ jobs:
       - name: Build library for a no_std target (schemars)
         run: cargo build --lib --target thumbv7em-none-eabihf --features schemars
 
+      - name: Build library for a no_std target (derive)
+        run: cargo build --lib --target thumbv7em-none-eabihf --features derive
+
+      - name: Build a derived, serde-enabled patch for a no_std target
+        run: cargo build --manifest-path derive/tests/no_std/Cargo.toml --target thumbv7em-none-eabihf --target-dir target
+
   docs:
     name: Documentation
     runs-on: ubuntu-latest
@@ -141,7 +147,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check documentation
-        run: cargo doc --all-features --no-deps --document-private-items
+        run: cargo doc --workspace --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -D warnings
 
@@ -161,7 +167,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build documentation as docs.rs does
-        run: cargo doc --all-features --no-deps
+        run: cargo doc --workspace --all-features --no-deps
         env:
           RUSTDOCFLAGS: --cfg docsrs -D warnings
 
@@ -182,7 +188,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       # Miri is slow, so the property tests run 8 cases instead of 256. Isolation
-      # is off because proptest reads its regression files from disk.
+      # is off because proptest reads its regression files from disk. Only the
+      # root crate runs: the derive crate's tests drive rustc through trybuild,
+      # and it has no unsafe code.
       - name: Run tests under Miri
         run: |
           cargo miri setup
@@ -206,7 +214,7 @@ jobs:
       - name: Check the library against the lowest allowed versions
         run: |
           cargo update -Z direct-minimal-versions
-          cargo check --lib --all-features
+          cargo check --workspace --lib --all-features
 
   semver:
     name: Semver
@@ -218,6 +226,9 @@ jobs:
       - name: Check for breaking changes against the latest release
         uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
         with:
+          # presence-rs-derive has no release yet to compare against. Drop this
+          # line once it does.
+          package: presence-rs
           feature-group: all-features
 
   security:

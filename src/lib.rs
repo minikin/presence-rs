@@ -86,16 +86,35 @@
 //! schema of an `Option<T>`: a `T` or `null`. The two serde attributes above also decide
 //! the schema: with both, schemars does not list the field in `required`.
 //!
+//! # Deriving a patch
+//!
+//! With the `derive` feature, `#[derive(Patch)]` generates a patch struct for a model
+//! struct and implements the [`Patch`] trait for it. A model field of type `Option<T>`
+//! becomes a `Presence<T>` in the patch, and any other field type `T` an `Option<T>`.
+//! `#[patch(derive(Serialize, Deserialize))]` gives every field the serde attributes
+//! above, and needs the `serde` feature too. The trait's documentation has an example.
+//!
 //! [`Presence<T>`]: presence::Presence
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+mod patch;
 pub mod presence;
+
+pub use patch::Patch;
 pub use presence::Presence;
+
+#[cfg(feature = "derive")]
+#[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
+pub use presence_rs_derive::Patch;
 
 #[cfg(feature = "serde")]
 mod serde;
+
+#[cfg(feature = "serde")]
+#[doc(hidden)]
+pub mod __private;
 
 #[cfg(feature = "schemars")]
 mod schemars;

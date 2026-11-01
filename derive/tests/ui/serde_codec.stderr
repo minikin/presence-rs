@@ -1,0 +1,23 @@
+error: `#[serde(with)]` cannot be carried over to a patch field: add `#[patch(skip)]` to leave the field out of the patch
+  --> tests/ui/serde_codec.rs:22:13
+   |
+22 |     #[serde(with = "codec")]
+   |             ^^^^^^^^^^^^^^
+
+error: `#[serde(serialize_with)]` cannot be carried over to a patch field: add `#[patch(skip)]` to leave the field out of the patch
+  --> tests/ui/serde_codec.rs:24:13
+   |
+24 |     #[serde(serialize_with = "codec::serialize")]
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: `#[serde(deserialize_with)]` cannot be carried over to a patch field: add `#[patch(skip)]` to leave the field out of the patch
+  --> tests/ui/serde_codec.rs:26:13
+   |
+26 |     #[serde(deserialize_with = "codec::deserialize")]
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: `#[serde(flatten)]` cannot be carried over to a patch field: add `#[patch(skip)]` to leave the field out of the patch
+  --> tests/ui/serde_codec.rs:28:13
+   |
+28 |     #[serde(flatten)]
+   |             ^^^^^^^

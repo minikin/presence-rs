@@ -250,6 +250,95 @@ assert_eq!(schema["properties"]["nickname"], json!({"type": ["string", "null"]})
 assert!(schema.get("required").is_none());
 ```
 
+## Deriving a patch
+
+The `derive` feature writes the request struct of [Applying a PATCH
+request](#applying-a-patch-request) for you. `#[derive(Patch)]` on `User`
+generates `UserPatch`, where a model field of type `Option<T>` becomes a
+`Presence<T>` and any other field `T` becomes an `Option<T>`, which can set the
+field but not clear it. `UserPatch` implements the `Patch` trait: `apply_to`,
+`merge`, `is_empty`, and a `Default` that sets nothing.
+
+```toml
+[dependencies]
+presence-rs = { version = "0.3.0", features = ["derive", "serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+```
+
+```rust
+use presence_rs::Patch;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Patch)]
+#[patch(derive(Debug, Serialize, Deserialize))]
+struct User {
+    #[patch(skip)]
+    id: u64,
+    name: String,
+    nickname: Option<String>,
+}
+
+let mut user = User {
+    id: 7,
+    name: "Alice".to_string(),
+    nickname: Some("al".to_string()),
+};
+
+let patch: UserPatch = serde_json::from_str(r#"{"name":"Alicia","nickname":null}"#).unwrap();
+patch.apply_to(&mut user);
+assert_eq!(
+    user,
+    User {
+        id: 7,
+        name: "Alicia".to_string(),
+        nickname: None,
+    }
+);
+
+// `name` is not an `Option` on the model, so `null` cannot clear it.
+assert!(serde_json::from_str::<UserPatch>(r#"{"name":null}"#).is_err());
+assert_eq!(serde_json::to_string(&UserPatch::default()).unwrap(), "{}");
+```
+
+The options:
+
+- `#[patch(name = AccountUpdate)]` names the struct. The default is the model's
+  name followed by `Patch`.
+- `#[patch(derive(...))]` adds derives to the patch. With `Serialize` or
+  `Deserialize`, bare or under `serde::`, every field gets the two serde
+  attributes from [Serde](#serde), a `null` for a non-`Option` field fails to
+  deserialize, and the model's `rename_all`, `deny_unknown_fields`, `rename`
+  and `alias` carry over. With `JsonSchema`, a non-`Option` field has the
+  schema of its model type, not nullable, and no field is listed in
+  `required`.
+- `#[patch(skip)]` leaves a field out of the patch, and applying the patch
+  never touches it. When the patch derives serde, `#[serde(skip)]` and
+  `#[serde(skip_deserializing)]` on the model field do the same.
+- `#[patch(crate = path)]` names the path to presence-rs, for a crate that
+  renames the dependency.
+
+Limits of the derive:
+
+- It sees tokens, not types, so it does not recognize a type alias of `Option`.
+  A field of such a type counts as a non-`Option` field and cannot be cleared.
+- A model field with `#[serde(with)]`, `serialize_with`, `deserialize_with` or
+  `flatten` needs `#[patch(skip)]` when the patch derives serde, because the
+  codec handles the model's type and not the patch's.
+- A generic parameter used only by skipped fields is unused in the patch, and
+  rustc rejects the struct (E0392).
+- Serde derives on the patch need the `serde` feature next to `derive`, and
+  `JsonSchema` needs the `schemars` feature.
+- A serde derive is recognized by its last path segment, `Serialize` or
+  `Deserialize`. Under another name, such as `use serde::Deserialize as De`,
+  the patch gets no serde attributes and a missing key reads as `null`. A
+  same-named derive from another crate, such as `rkyv::Deserialize`, gets
+  serde attributes and fails to compile.
+- When the model has `#[serde(deny_unknown_fields)]`, the patch rejects the
+  keys of its `#[patch(skip)]` fields as unknown.
+- A model field that is already a `Presence<T>` counts as a non-`Option`
+  field. The patch can replace it with a value but cannot set it to `Null`.
+
 ## Contributing
 
 Pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the

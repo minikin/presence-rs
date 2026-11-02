@@ -1,30 +1,22 @@
 //! Three-valued presence semantics for optional and nullable fields.
 //!
-//! This module provides the [`Presence<T>`] type, a three-valued alternative to Rust's
-//! two-valued [`Option<T>`]. Where `Option` distinguishes between "some value" and "no value",
-//! `Presence` adds a third state to distinguish between "field not present" and "field
-//! present but null". This is particularly useful for:
+//! [`Presence<T>`] has three states where [`Option<T>`] has two. `Option` separates
+//! "some value" from "no value", and `Presence` splits the second into "the field is
+//! not there" and "the field is there and null". Formats that can tell those apart:
 //!
-//! - JSON/IPLD schema validation where `{}`, `{"field": null}`, and `{"field": value}` are distinct
-//! - API responses where missing fields have different semantics than explicit nulls
-//! - Database operations where NULL and absence have different meanings
-//! - Form data where unchecked boxes differ from explicitly set null values
+//! - JSON and IPLD schemas, where `{}`, `{"field": null}` and `{"field": value}` are
+//!   three different documents
+//! - API responses, where a missing field and an explicit null carry different meanings
+//! - database rows, where a NULL column and a missing column differ
+//! - form data, where an unchecked box differs from a value explicitly cleared
 //!
 //! # Three States
 //!
-//! [`Presence<T>`] has three variants:
-//!
-//! - [`Absent`]: The field/key is not present in the data structure
-//!   - JSON: `{}` (field omitted)
-//!   - Semantics: Field was never set, doesn't exist in the structure
-//!
-//! - [`Null`]: The field/key is present but the value is explicitly null
-//!   - JSON: `{"field": null}`
-//!   - Semantics: Field exists but was explicitly set to null
-//!
-//! - [`Some(T)`]: The field/key is present with a concrete value
-//!   - JSON: `{"field": value}`
-//!   - Semantics: Field exists with a meaningful value
+//! - [`Absent`]: the field is not in the structure, JSON `{}`. It was never set.
+//! - [`Null`]: the field is in the structure and its value is null, JSON
+//!   `{"field": null}`.
+//! - [`Some(T)`]: the field is in the structure with a concrete value, JSON
+//!   `{"field": value}`.
 //!
 //! [`Absent`]: Presence::Absent
 //! [`Null`]: Presence::Null
@@ -32,12 +24,13 @@
 //!
 //! # Comparison with Option
 //!
-//! While [`Option<Option<T>>`] can represent three states, [`Presence<T>`] provides:
-//!
-//! - **Clearer semantics**: Named variants instead of nested Options
-//! - **Better ergonomics**: Single-level matching instead of nested patterns
-//! - **Rich API**: Methods designed for three-valued logic
-//! - **IPLD compatibility**: Direct support for IPLD schema semantics
+//! [`Option<Option<T>>`] holds the same three states, `None` for absent and `Some(None)`
+//! for null. `Presence<T>` names them instead, so a match is one level deep rather than
+//! two. Its methods can also treat the two empty states differently.
+//! [`unwrap_or_absent_or_null`] takes one default for each. [`is_defined`] answers the
+//! IPLD schema question of whether the field is there at all, and [`merge`] composes
+//! PATCH requests. [`to_nullable`] and [`from_nullable`] convert between the two
+//! representations.
 //!
 //! # Examples
 //!
@@ -179,6 +172,10 @@
 //! [`xor`]: Presence::xor
 //! [`merge`]: Presence::merge
 //! [`take_if`]: Presence::take_if
+//! [`unwrap_or_absent_or_null`]: Presence::unwrap_or_absent_or_null
+//! [`is_defined`]: Presence::is_defined
+//! [`to_nullable`]: Presence::to_nullable
+//! [`from_nullable`]: Presence::from_nullable
 //!
 //! # Patching
 //!
@@ -219,17 +216,11 @@
 //!
 //! # Cardinality
 //!
-//! For a base type with `N` possible values, `Presence<T>` provides `N + 2` states:
-//!
-//! - `N` states from `Some(value)` where value has type `T`
-//! - `1` state from `Null` (explicitly null)
-//! - `1` state from `Absent` (not present)
-//!
-//! For example, `Presence<bool>` has 4 states: `Some(true)`, `Some(false)`, `Null`, `Absent`.
+//! `Presence<T>` has `N + 2` states for a `T` with `N` values: the `N` that
+//! `Some(value)` can hold, plus `Null` and `Absent`. `Presence<bool>` has four:
+//! `Some(true)`, `Some(false)`, `Null`, `Absent`.
 //!
 //! # API Organization
-//!
-//! The API is organized into several categories:
 //!
 //! - **Querying**: `is_absent()`, `is_null()`, `is_present()`, `is_defined()`, `is_nullish()`,
 //!   `is_some_and()`, `is_absent_or()`, `is_nullish_or()`
@@ -277,18 +268,18 @@ pub use iter::{IntoIter, Iter, IterMut};
 #[must_use = "`Presence` may contain a value that should be used"]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Presence<T> {
-    /// Field/key is absent from the structure
+    /// The field is not in the structure.
     #[doc(alias = "undefined")]
     #[doc(alias = "missing")]
     #[doc(alias = "none")]
     #[doc(alias = "empty")]
     Absent,
-    /// Field/key is present but the value is null
+    /// The field is in the structure and its value is null.
     #[doc(alias = "nil")]
     #[doc(alias = "nothing")]
     #[doc(alias = "void")]
     Null,
-    /// Field/key is present with a concrete value
+    /// The field is in the structure with a concrete value.
     #[doc(alias = "value")]
     #[doc(alias = "present")]
     #[doc(alias = "defined")]
@@ -300,7 +291,7 @@ pub enum Presence<T> {
 #[deprecated(since = "0.3.0", note = "renamed to `IntoIter`")]
 pub type Item<A> = IntoIter<A>;
 
-/// Display implementation
+/// Writes `Some(value)` as the value, `Null` as `null` and `Absent` as `(absent)`.
 impl<T: fmt::Display> fmt::Display for Presence<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

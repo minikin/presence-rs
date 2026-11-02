@@ -111,7 +111,8 @@ impl<'a, T> IntoIterator for &'a Presence<T> {
     /// Returns an iterator over a reference to the possibly contained value.
     ///
     /// The iterator yields one reference if the presence is [`Some`], otherwise none.
-    /// This is what makes `for x in &presence` work; it is equivalent to [`iter`].
+    /// This is what makes `for x in &presence` work, and it is the same iterator
+    /// [`iter`] returns.
     ///
     /// [`Some`]: Presence::Some
     /// [`iter`]: Presence::iter
@@ -147,7 +148,8 @@ impl<'a, T> IntoIterator for &'a mut Presence<T> {
     /// Returns an iterator over a mutable reference to the possibly contained value.
     ///
     /// The iterator yields one mutable reference if the presence is [`Some`], otherwise none.
-    /// This is what makes `for x in &mut presence` work; it is equivalent to [`iter_mut`].
+    /// This is what makes `for x in &mut presence` work, and it is the same iterator
+    /// [`iter_mut`] returns.
     ///
     /// [`Some`]: Presence::Some
     /// [`iter_mut`]: Presence::iter_mut
@@ -409,9 +411,9 @@ impl<A, V: FromIterator<A>> FromIterator<Presence<A>> for Presence<V> {
     /// Returns `Null` if any element is `Null` (and none are `Absent`).
     /// Returns `Some(collection)` only if all elements are `Some`.
     ///
-    /// The values are passed to `V::from_iter` as they arrive, without buffering, so a `V`
-    /// is always built — from the values before the first `Null` or `Absent`, possibly
-    /// none of them — and then discarded if the result is `Null` or `Absent`.
+    /// The values are passed to `V::from_iter` as they arrive, without buffering, so a
+    /// `V` is always built from the values before the first `Null` or `Absent`, possibly
+    /// none of them, and then discarded if the result is `Null` or `Absent`.
     ///
     /// Reading stops at the first `Absent`. After a `Null` the rest of the input is still
     /// read, because a later `Absent` decides the result, so an endless iterator that never

@@ -4,15 +4,61 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # The Keeler the coverage, CRAP and mutation gates come from. CI has no
+  # plugin, so those jobs read the recipes from a checkout of their own at
+  # this ref: what runs here is then exactly what `keeler dev` runs on a
+  # developer's machine.
+  # Pinned to a Keeler main commit, not the v0.4.1 tag: the tag's Justfile
+  # `mutants-diff` takes no BASE argument, which the mutants job passes.
+  # Move back to a tag once one ships with `mutants-diff BASE`.
+  KEELER_REF: bf5c63d5953dea42b4e9b63b5a81b6714a088b32
+  # The two bars the Keeler recipes read. Moving one here moves it for
+  # every job below; exporting the same name in your shell moves it for
+  # `keeler dev`.
+  KEELER_COV_MIN: 90
+  KEELER_CRAP_MAX: 10
 
 jobs:
+  # Every Rust job is gated on `rust`, and mutation testing on `src`, so a
+  # pull request that touches only prose or another workflow skips them.
+  # GitHub still reports the skipped jobs, which satisfies required checks.
+  # This file is in both filters: a change to a job runs that job. README.md
+  # is Rust too — `src/lib.rs` includes it, so its code blocks are doctests.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            rust:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+              - '**/Cargo.lock'
+              - 'clippy.toml'
+              - 'rustfmt.toml'
+              - 'crap-baseline.json'
+              - '**/*.proptest-regressions'
+              - 'README.md'
+              - '.github/workflows/ci.yml'
+            src:
+              - 'src/**/*.rs'
+              - 'derive/src/**/*.rs'
+              - '.github/workflows/ci.yml'
+
   test:
-    name: Test Suite
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -26,122 +72,90 @@ jobs:
           - os: macos-latest
             rust: nightly
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-nextest
+      # Test builds enable `serde` through the crate's dev-dependency on
+      # itself, so this run differs from the next only in `schemars` and
+      # `derive`.
+      - name: Test (default features)
+        run: cargo nextest run --workspace --all-targets --no-tests=pass
+      - name: Test (all features)
+        run: cargo nextest run --workspace --all-targets --all-features --no-tests=pass
+      - name: Doc tests
+        run: cargo test --workspace --doc --all-features
 
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      # Test builds always enable `serde` through the crate's dev-dependency on
-      # itself, so a separate no-features test run would repeat this one.
-      - name: Run tests
-        run: cargo test --all-features --verbose
-
-      - name: Run doc tests
-        run: cargo test --doc --all-features
-
-  fmt:
-    name: Rustfmt
+  lints:
+    name: Lints
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt
-
-      - name: Check formatting
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: rustfmt
         run: cargo fmt --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
+      - name: clippy (default features)
+        run: cargo clippy --workspace --all-targets -- -D warnings
       # Only a library-only build leaves the dev-dependencies, and with them
       # the `serde` feature, out.
-      - name: Run clippy (library, no features)
-        run: cargo clippy --lib --no-default-features -- -D warnings
-
-      - name: Run clippy (all features)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: clippy (library, no features)
+        run: cargo clippy --workspace --lib --no-default-features -- -D warnings
+      - name: clippy (all features)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   msrv:
-    name: MSRV
+    name: MSRV (Rust 1.85)
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
+      - uses: actions/checkout@v6
       # Keep in sync with `rust-version` in Cargo.toml.
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.85
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
+      - uses: dtolnay/rust-toolchain@1.85
+      - uses: Swatinem/rust-cache@v2
       - name: Check library (no features)
-        run: cargo check --lib --no-default-features
-
+        run: cargo check --workspace --lib --no-default-features
       - name: Check library (all features)
-        run: cargo check --lib --all-features
+        run: cargo check --workspace --lib --all-features
 
   no-std:
     name: no_std
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv7em-none-eabihf
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build library for a no_std target (no features)
-        run: cargo build --lib --target thumbv7em-none-eabihf --no-default-features
-
-      - name: Build library for a no_std target (serde)
-        run: cargo build --lib --target thumbv7em-none-eabihf --features serde
-
-      - name: Build library for a no_std target (schemars)
-        run: cargo build --lib --target thumbv7em-none-eabihf --features schemars
+      - uses: Swatinem/rust-cache@v2
+      - name: Build the library for a no_std target, feature by feature
+        run: |
+          cargo build --lib --target thumbv7em-none-eabihf --no-default-features
+          cargo build --lib --target thumbv7em-none-eabihf --features serde
+          cargo build --lib --target thumbv7em-none-eabihf --features schemars
+          cargo build --lib --target thumbv7em-none-eabihf --features derive
+      - name: Build a derived, serde-enabled patch for a no_std target
+        run: cargo build --manifest-path derive/tests/no_std/Cargo.toml --target thumbv7em-none-eabihf --target-dir target
 
   docs:
-    name: Documentation
+    name: Docs
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Check documentation
-        run: cargo doc --all-features --no-deps --document-private-items
+        run: cargo doc --workspace --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -D warnings
 
@@ -149,40 +163,34 @@ jobs:
   # up here before it breaks the published page.
   docs-rs:
     name: docs.rs build
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
       - name: Build documentation as docs.rs does
-        run: cargo doc --all-features --no-deps
+        run: cargo doc --workspace --all-features --no-deps
         env:
           RUSTDOCFLAGS: --cfg docsrs -D warnings
 
   miri:
     name: Miri
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           components: miri
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
+      - uses: Swatinem/rust-cache@v2
       # Miri is slow, so the property tests run 8 cases instead of 256. Isolation
-      # is off because proptest reads its regression files from disk.
+      # is off because proptest reads its regression files from disk. Only the
+      # root crate runs: the derive crate's tests drive rustc through trybuild,
+      # and it has no unsafe code.
       - name: Run tests under Miri
         run: |
           cargo miri setup
@@ -192,42 +200,261 @@ jobs:
           MIRIFLAGS: -Zmiri-disable-isolation
 
   minimal-versions:
-    name: Minimal dependency versions
+    name: Minimal versions
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@nightly
-
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@nightly
       # Only the library is checked: the dev-dependencies do not build at their
       # minimal versions, and users never build them.
       - name: Check the library against the lowest allowed versions
         run: |
           cargo update -Z direct-minimal-versions
-          cargo check --lib --all-features
+          cargo check --workspace --lib --all-features
 
   semver:
     name: Semver
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
+      - uses: actions/checkout@v6
       - name: Check for breaking changes against the latest release
         uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
         with:
+          # presence-rs-derive has no release yet to compare against. Drop this
+          # line once it does.
+          package: presence-rs
           feature-group: all-features
 
-  security:
-    name: Security Audit
+  audit:
+    name: Security audit
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
+      - uses: actions/checkout@v6
       - name: Run security audit
         uses: rustsec/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  coverage:
+    name: Coverage and CRAP
+    needs: [changes]
+    if: needs.changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov,cargo-nextest,cargo-crap,just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned ref
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/ci.yml" >&2
+            exit 1
+          fi
+      - name: Coverage gate
+        run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . cov
+      # The committed baseline is the shared reference: a change may not
+      # regress any function's score, whatever the absolute threshold says.
+      # Without one, only the threshold applies — run `keeler crap-baseline`
+      # and commit the result to turn the ratchet on.
+      - name: CRAP gate
+        run: |
+          if [ -f crap-baseline.json ]; then
+            just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . crap-delta
+          else
+            echo "no crap-baseline.json committed — threshold only, no delta gate"
+            just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . crap
+          fi
+      # `always()`: the gate above writes lcov.info before it judges it, so a
+      # failing gate still publishes a yellow or red badge instead of leaving
+      # the last green one up. The Badges workflow renders the pills from this
+      # artifact, which is why this job needs no `contents: write`.
+      - name: Generate badge values (main only)
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          # The gate may have failed before writing lcov.info.
+          [ -f lcov.info ] || { echo "no lcov.info — nothing to render badges from"; exit 0; }
+          cargo crap --lcov lcov.info --workspace \
+            --threshold "$KEELER_CRAP_MAX" \
+            --format shields --output crap-badge.json
+          awk -F: '/^LF:/ { found += $2 } /^LH:/ { hit += $2 }
+            END { if (found) printf "%.1f\n", 100 * hit / found }' lcov.info > coverage.txt
+      - name: Upload badge artifact (main only)
+        if: always() && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v5
+        with:
+          name: crap-badge
+          path: |
+            crap-badge.json
+            coverage.txt
+          if-no-files-found: ignore
+
+  mutants:
+    name: Mutation tests
+    needs: [changes]
+    if: needs.changes.outputs.src == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants,cargo-nextest,just
+      - uses: actions/cache@v4
+        id: keeler
+        with:
+          path: ${{ runner.temp }}/keeler
+          key: keeler-${{ env.KEELER_REF }}
+      - name: Fetch Keeler at the pinned ref
+        if: steps.keeler.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/keeler"
+          if ! curl -fsSL "https://codeload.github.com/minikin/keeler/tar.gz/${KEELER_REF}" \
+               | tar -xz -C "$RUNNER_TEMP/keeler" --strip-components=1; then
+            echo "cannot fetch Keeler at ${KEELER_REF} — check the KEELER_REF line in .github/workflows/ci.yml" >&2
+            exit 1
+          fi
+      # Changed lines only on a pull request: a full mutation run takes hours
+      # and reports debt you did not just write. The recipe carries the
+      # settings the run needs — a bare `cargo mutants` here would carry none.
+      - name: Mutation tests (changed lines only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: just --justfile "$RUNNER_TEMP/keeler/Justfile" --working-directory . mutants-diff "origin/${BASE_REF}"
+      - name: Upload mutants output
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: mutants-out
+          path: mutants.out/
+
+  # A task branch measures against the whole-repo state; it never moves it.
+  # `crap-baseline.json` is the reference every branch is judged by, and it
+  # settles at fan-in, on main — `keeler keeler-land` regenerates it there
+  # and stages it for a human to commit. A branch that moved it would record
+  # its own tree as the new normal, and every branch after it would measure
+  # against that instead of against main. The bars themselves are no longer
+  # a file a branch can reach: they are the two variables at the top of this
+  # workflow, which only a change to this file can move.
+  #
+  # Not gated on `changes`: a task branch owes these two checks whatever it
+  # touched.
+  branch-baseline:
+    name: Branch leaves the baseline alone
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'keeler/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The check diffs against the merge base; a shallow clone has none.
+          fetch-depth: 0
+      - name: The branch left the baseline alone
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          fail() { echo "branch baseline: $*" >&2; exit 1; }
+          moved="baselines move only at land time, on main — run keeler keeler-land there"
+          # A checkout on a pull request holds the branches as origin/ refs
+          # and a detached HEAD; a local run holds them by name.
+          resolve() {
+            git rev-parse --verify -q "origin/$1^{commit}" \
+              || git rev-parse --verify -q "$1^{commit}"
+          }
+          base_ref="${BASE_REF:-main}"
+          base=$(resolve "$base_ref") \
+            || fail "cannot resolve base branch $base_ref — is the checkout fetch-depth: 0?"
+          merge_base=$(git merge-base "$base" HEAD) \
+            || fail "no merge base with $base_ref — is the checkout fetch-depth: 0?"
+          if ! git diff --quiet "$merge_base" HEAD -- crap-baseline.json; then
+            fail "crap-baseline.json changed on this branch — $moved"
+          fi
+          echo "crap-baseline.json is as $base_ref left it"
+
+  # A task branch — keeler/<spec-slug>/<task-id> — must carry the record
+  # /keeler:review writes, and the record must name a commit this branch
+  # made. Existence alone is a gate `touch` satisfies; ancestry of the head
+  # alone lets the merge base through, and that covers none of the branch's
+  # work. So: an ancestor of the head, and not of the base.
+  review-record:
+    name: Review record
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'keeler/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The check walks ancestry: a shallow clone sees none, and every
+          # honest record would fail.
+          fetch-depth: 0
+      - name: The record names a commit this branch made
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          fail() { echo "review record: $*" >&2; exit 1; }
+          shape="keeler/<spec-slug>/<task-id>"
+          case "${HEAD_REF:-}" in
+            keeler/?*/?*) ;;
+            *) fail "branch '${HEAD_REF:-}' is not $shape" ;;
+          esac
+          rest="${HEAD_REF#keeler/}"
+          case "$rest" in
+            */*/*) fail "branch '$HEAD_REF' is not $shape" ;;
+          esac
+          record="reviews/${rest%/*}/${rest#*/}.md"
+          [ -f "$record" ] || fail "$record is missing — /keeler:review writes it at the end of the stage"
+          lines=$(grep -c '^Commit:' "$record" || true)
+          [ "$lines" -eq 1 ] || fail "$record must carry exactly one Commit: line, found $lines"
+          sha=$(sed -n 's/^Commit:[[:space:]]*//p' "$record" | tr -d '[:space:]')
+          [ -n "$sha" ] || fail "$record: the Commit: line names nothing"
+          # A checkout on a pull request holds the branches as origin/ refs
+          # and a detached HEAD; a local run holds them by name.
+          resolve() {
+            git rev-parse --verify -q "origin/$1^{commit}" \
+              || git rev-parse --verify -q "$1^{commit}"
+          }
+          base_ref="${BASE_REF:-main}"
+          # What was checked out is what is under review, and asking for it
+          # by name is how the wrong history gets judged: a pull request
+          # from a fork resolves `origin/<branch>` against the *base*
+          # repository, so an abandoned branch there of the same name would
+          # stand in for this one. HEAD is unambiguous — the branch tip
+          # locally, the merge commit in CI, whose ancestry is the branch's
+          # plus the base's, and the base is excluded below.
+          head=$(git rev-parse --verify -q "HEAD^{commit}") \
+            || fail "cannot resolve the checked-out commit — is the checkout fetch-depth: 0?"
+          base=$(resolve "$base_ref") || fail "cannot resolve base branch $base_ref"
+          git rev-parse --verify -q "$sha^{commit}" >/dev/null \
+            || fail "$record: Commit: $sha is not a commit in this repository"
+          git merge-base --is-ancestor "$sha" "$head" \
+            || fail "$record: Commit: $sha is not an ancestor of $HEAD_REF — the record does not cover this branch"
+          if git merge-base --is-ancestor "$sha" "$base"; then
+            fail "$record: Commit: $sha is already on $base_ref — the record names no work of this branch"
+          fi
+          echo "$record names $sha, a commit of $HEAD_REF"

@@ -1,22 +1,23 @@
 //! Three-valued logic for Rust: distinguishing between absent, null, and present values.
 //!
-//! This crate provides the [`Presence<T>`] type, a three-valued alternative to [`Option<T>`]
-//! that distinguishes between "field not present" and "field present but null".
+//! [`Presence<T>`] is a three-valued [`Option<T>`]: it keeps "the field is not there"
+//! apart from "the field is there and null".
 //!
 //! # The Three States
 //!
-//! - **`Absent`**: Field doesn't exist in the data structure (`{}` in JSON)
-//! - **`Null`**: Field exists but is explicitly null (`{"field": null}` in JSON)
-//! - **`Some(value)`**: Field exists with a concrete value (`{"field": 42}` in JSON)
+//! - **`Absent`**: the field is not in the data structure, `{}` in JSON
+//! - **`Null`**: the field is there and explicitly null, `{"field": null}` in JSON
+//! - **`Some(value)`**: the field is there with a concrete value, `{"field": 42}` in JSON
 //!
 //! # When to Use This
 //!
-//! Use `Presence<T>` when you need to distinguish between absence and null:
+//! Formats and stores that can tell absence from null:
 //!
-//! - JSON/API responses where `{}`, `{"field": null}`, and `{"field": value}` are semantically different
-//! - IPLD schemas where absent and null fields have distinct meanings
-//! - Database operations where NULL and missing columns differ
-//! - Form data where unchecked differs from explicitly cleared
+//! - JSON APIs, where `{}`, `{"field": null}` and `{"field": value}` are three
+//!   different documents
+//! - IPLD schemas, where absent and null fields carry different meanings
+//! - databases, where a NULL column and a missing column differ
+//! - form data, where an unchecked box differs from a value explicitly cleared
 //!
 //! # Quick Example
 //!
@@ -35,7 +36,7 @@
 //! assert_eq!(null.map(|x| x * 2), Presence::Null);
 //! ```
 //!
-//! See the [`mod@presence`] module for detailed documentation and examples.
+//! The [`mod@presence`] module documents how each method treats the three states.
 //!
 //! The crate is `#![no_std]`. It needs no allocator, with or without the `serde` feature.
 //! The `schemars` feature needs `alloc`.
@@ -86,24 +87,40 @@
 //! schema of an `Option<T>`: a `T` or `null`. The two serde attributes above also decide
 //! the schema: with both, schemars does not list the field in `required`.
 //!
+//! # Deriving a patch
+//!
+//! With the `derive` feature, `#[derive(Patch)]` generates a patch struct for a model
+//! struct and implements the [`Patch`] trait for it. A model field of type `Option<T>`
+//! becomes a `Presence<T>` in the patch, and any other field type `T` an `Option<T>`.
+//! `#[patch(derive(Serialize, Deserialize))]` gives every field the serde attributes
+//! above, and needs the `serde` feature too. The trait's documentation has an example.
+//!
 //! [`Presence<T>`]: presence::Presence
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+mod patch;
 pub mod presence;
+
+pub use patch::Patch;
 pub use presence::Presence;
+
+#[cfg(feature = "derive")]
+#[cfg_attr(docsrs, doc(cfg(feature = "derive")))]
+pub use presence_rs_derive::Patch;
 
 #[cfg(feature = "serde")]
 mod serde;
+
+#[cfg(feature = "serde")]
+#[doc(hidden)]
+pub mod __private;
 
 #[cfg(feature = "schemars")]
 mod schemars;
 
 /// Convenience macro for creating [`Presence`] values.
-///
-/// This macro provides a concise syntax for constructing `Presence` values,
-/// similar to how `vec![]` works for `Vec`.
 ///
 /// [`Presence`]: presence::Presence
 ///

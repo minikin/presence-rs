@@ -1,0 +1,7 @@
+error[E0560]: struct `AccountPatch` has no field named `id`
+  --> tests/ui/skipped_field.rs:12:9
+   |
+12 |         id: Some(1),
+   |         ^^ `AccountPatch` does not have this field
+   |
+   = note: all struct fields are already assigned

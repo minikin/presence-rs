@@ -40,8 +40,8 @@ install `just`, `cargo-nextest`, `cargo-llvm-cov`, `cargo-mutants` and
 
 ```bash
 cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
 ```
 
 With Keeler installed, `keeler dev` runs all of that plus coverage and the
@@ -50,7 +50,8 @@ changed. A surviving mutant means a test would still pass with that line
 broken. Fix it with the test that catches it, never by reshaping the code
 until the mutant goes away.
 
-CI runs the same gates and adds:
+CI runs the same gates, skips the Rust jobs when a change touches only
+prose outside the README, and adds:
 
 - the tests on Linux, macOS and Windows, on stable and beta, and on nightly
   on Linux
@@ -60,8 +61,10 @@ CI runs the same gates and adds:
 - `cargo-semver-checks` against the latest release
 - a docs build as docs.rs runs it
 - `cargo audit`
+- line coverage of at least 90% and a CRAP score of at most 10 per function
 - a CRAP comparison against `crap-baseline.json`, which fails when any
   function's score went up
+- mutation tests on the lines a pull request changes
 
 ## Tests
 
@@ -91,10 +94,20 @@ verified.
 
 ## Releases
 
-The maintainer bumps the version in `Cargo.toml`, dates the CHANGELOG
-entry, merges, and pushes a `vX.Y.Z` tag on `main`. The release workflow
-checks the tag against the crate version, runs the tests and the `no_std`
-and MSRV builds, and publishes to crates.io through trusted publishing.
+The repository holds two crates, `presence-rs` and `presence-rs-derive`,
+released together at one version. The maintainer bumps
+`[workspace.package] version` and the `=X.Y.Z` pin on
+`presence-rs-derive` in the root `Cargo.toml` (a test fails if the two
+disagree), dates the CHANGELOG entry, merges, and pushes a `vX.Y.Z` tag on
+`main`. The release workflow checks the tag against the crate version, runs
+the tests and the `no_std` and MSRV builds, and publishes both crates to
+crates.io through trusted publishing, the derive crate first.
+
+crates.io configures trusted publishing per crate, and only for a crate
+that already exists. The first release of `presence-rs-derive` is
+therefore published by hand with an API token
+(`cargo publish -p presence-rs-derive`), and its trusted publisher is
+added on crates.io before the tag is pushed.
 
 ## Code of conduct
 

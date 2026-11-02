@@ -1,13 +1,32 @@
-[package]
-name = "presence-rs"
+[workspace]
+members = [".", "derive"]
+
+# Both crates are released together at the same version.
+[workspace.package]
 version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Oleksandr Prokhorenko <warbles.lieu_04@icloud.com>"]
-description = "A Rust library providing a tri-state type for representing value presence in schemas and data structures."
 license = "MIT"
 repository = "https://github.com/minikin/presence-rs"
 homepage = "https://github.com/minikin/presence-rs"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[package]
+name = "presence-rs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "A Rust library providing a tri-state type for representing value presence in schemas and data structures."
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
 keywords = ["nullable", "option", "undefined", "tri-state", "schema"]
 categories = ["data-structures", "encoding", "rust-patterns", "no-std", "no-std::no-alloc"]
 readme = "README.md"
@@ -20,6 +39,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 serde = { version = "1.0.194", optional = true, default-features = false }
 schemars = { version = "1", optional = true, default-features = false }
+presence-rs-derive = { version = "=0.3.0", path = "derive", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0.127"
@@ -28,22 +48,20 @@ proptest = "1.11.0"
 schemars = { version = "1", features = ["derive"] }
 # Runs the README's utoipa example. utoipa 6 needs Rust 1.88.
 utoipa = "5"
-# Enables the `serde` and `schemars` features for tests, so the Keeler gates
-# (which build without `--all-features`) test and measure `src/serde.rs` and
-# `src/schemars.rs`.
-presence-rs = { path = ".", features = ["serde", "schemars"] }
+# Enables the `serde`, `schemars` and `derive` features for tests, so the Keeler
+# gates (which build without `--all-features`) test and measure `src/serde.rs`
+# and `src/schemars.rs`, and the README's derive example runs.
+presence-rs = { path = ".", features = ["serde", "schemars", "derive"] }
 
 [features]
 default = []
 serde = ["dep:serde"]
 schemars = ["dep:schemars"]
+derive = ["dep:presence-rs-derive"]
 
 [profile.mutants]
 inherits = "dev"
 debug = 0
 
-[lints.clippy]
-pedantic = { level = "warn", priority = -1 }
-allow_attributes = "warn"
-allow_attributes_without_reason = "warn"
-undocumented_unsafe_blocks = "warn"
+[lints]
+workspace = true

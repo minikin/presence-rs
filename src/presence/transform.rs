@@ -19,14 +19,13 @@ impl<T> Presence<T> {
     /// Returns the contained [`Some`] value, `absent` for [`Absent`] or `null` for
     /// [`Null`].
     ///
-    /// This is useful when you need to handle the two "empty" states differently,
-    /// such as in IPLD schemas where null and absent have distinct meanings.
+    /// The two empty states take separate defaults, as IPLD schemas need, where null
+    /// and absent have distinct meanings.
     ///
     /// The defaults are taken in the order the name gives them, `Absent` first, as in
-    /// the ordering `Absent < Null < Some(_)`. Arguments passed to
-    /// `unwrap_or_absent_or_null` are eagerly evaluated. If you are passing the result
-    /// of a function call, it is recommended to use [`unwrap_or_else_absent_or_null`],
-    /// which is lazily evaluated.
+    /// the ordering `Absent < Null < Some(_)`. Both arguments are evaluated eagerly.
+    /// For a default that comes from a function call, use
+    /// [`unwrap_or_else_absent_or_null`], which is lazy.
     ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
@@ -222,9 +221,8 @@ impl<T> Presence<T> {
 
     /// Returns the contained [`Some`] value or a provided default.
     ///
-    /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing
-    /// the result of a function call, it is recommended to use [`unwrap_or_else`],
-    /// which is lazily evaluated.
+    /// The argument is evaluated eagerly. For a default that comes from a function
+    /// call, use [`unwrap_or_else`], which is lazy.
     ///
     /// [`Some`]: Presence::Some
     /// [`unwrap_or_else`]: Presence::unwrap_or_else
@@ -623,9 +621,8 @@ impl<T> Presence<T> {
     /// Returns the provided default result (if [`Null`] or [`Absent`]),
     /// or applies a function to the contained value (if [`Some`]).
     ///
-    /// Arguments passed to `map_or` are eagerly evaluated; if you are passing
-    /// the result of a function call, it is recommended to use [`map_or_else`],
-    /// which is lazily evaluated.
+    /// The default is evaluated eagerly. For one that comes from a function call, use
+    /// [`map_or_else`], which is lazy.
     ///
     /// [`Some`]: Presence::Some
     /// [`Null`]: Presence::Null
@@ -844,9 +841,8 @@ impl<T> Presence<T> {
     ///
     /// State rule: [first `Some` wins](mod@crate::presence#combining-states): when `self` isn't `Some`, `optb` is returned whatever its state.
     ///
-    /// Arguments passed to `or` are eagerly evaluated; if you are passing the
-    /// result of a function call, it is recommended to use [`or_else`], which is
-    /// lazily evaluated.
+    /// The argument is evaluated eagerly. For an alternative that comes from a function
+    /// call, use [`or_else`], which is lazy.
     ///
     /// [`or_else`]: Presence::or_else
     ///
@@ -1084,7 +1080,7 @@ impl<T> Presence<T> {
         self.zip(other).map(|(a, b)| f(a, b))
     }
 
-    /// Combines `self` and another `Presence` with function `f`; the same as
+    /// Combines `self` and another `Presence` with function `f`, the same as
     /// [`zip_with`](Presence::zip_with), including its state rule.
     #[deprecated(since = "0.3.0", note = "use `zip_with`, which does the same")]
     #[inline]

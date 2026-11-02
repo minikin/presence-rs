@@ -293,7 +293,7 @@ mod tests {
         );
         let options = container(&input).expect("valid options");
         assert!(options.name.is_none());
-        assert!(options.derives.is_empty());
+        assert_eq!(options.derives, [] as [syn::Path; 0]);
     }
 
     #[test]
